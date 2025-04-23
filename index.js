@@ -665,17 +665,45 @@ async function run() {
       }
     });
 
-    // Example Express route
     app.patch("/verifyEvent/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: {
-          status: req.body.status, // should be 'verified'
-        },
-      };
-      const result = await eventReviewsCollection.updateOne(filter, updateDoc);
-      res.send(result);
+
+      try {
+        // Retrieve the review from the database
+        const review = await eventReviewsCollection.findOne(filter);
+
+        if (!review) {
+          return res.status(404).send({ message: "Review not found" }); // Review doesn't exist
+        }
+
+        // Check if the review is already verified
+        if (review.status === "verified") {
+          return res
+            .status(400)
+            .send({ message: "Review is already verified" }); // No need to update
+        }
+
+        const updateDoc = {
+          $set: {
+            status: "verified", // Change status to 'verified'
+          },
+        };
+
+        const result = await eventReviewsCollection.updateOne(
+          filter,
+          updateDoc
+        );
+
+        if (result.modifiedCount > 0) {
+          return res.status(200).send({ modifiedCount: result.modifiedCount });
+        } else {
+          return res.status(400).send({ message: "No changes made" }); // If no document was updated
+        }
+      } catch (error) {
+        console.error("Error during review verification:", error);
+        res.status(500).send({ message: "Failed to verify review" });
+      }
     });
 
     // Delete a review
