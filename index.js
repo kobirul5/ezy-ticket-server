@@ -85,6 +85,12 @@ async function run() {
     const busServiceCollection = client
       .db("ezyTicket")
       .collection("busServices");
+    const busPaymentCollection = client
+      .db("ezyTicket")
+      .collection("busPayments");
+    const busFlashDealCollection = client
+      .db("ezyTicket")
+      .collection("travelFlashDeals");
 
     app.get("/", (req, res) => {
       res.send("EzyTicket server is Running");
@@ -551,6 +557,22 @@ async function run() {
       }
     });
 
+    // Advertise event api
+    app.get("/topEvents", async (req, res) => {
+      if (!eventCollection) {
+        return res.status(500).send({ message: "Database not initialized" });
+      }
+      try {
+        const events = await eventCollection
+          .find({ advertise: true })
+          .toArray();
+        res.send(events);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        res.status(500).send({ message: "Failed to fetch events", error });
+      }
+    });
+
     app.get("/events/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
@@ -665,45 +687,17 @@ async function run() {
       }
     });
 
+    // Example Express route
     app.patch("/verifyEvent/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-
-      try {
-        // Retrieve the review from the database
-        const review = await eventReviewsCollection.findOne(filter);
-
-        if (!review) {
-          return res.status(404).send({ message: "Review not found" }); // Review doesn't exist
-        }
-
-        // Check if the review is already verified
-        if (review.status === "verified") {
-          return res
-            .status(400)
-            .send({ message: "Review is already verified" }); // No need to update
-        }
-
-        const updateDoc = {
-          $set: {
-            status: "verified", // Change status to 'verified'
-          },
-        };
-
-        const result = await eventReviewsCollection.updateOne(
-          filter,
-          updateDoc
-        );
-
-        if (result.modifiedCount > 0) {
-          return res.status(200).send({ modifiedCount: result.modifiedCount });
-        } else {
-          return res.status(400).send({ message: "No changes made" }); // If no document was updated
-        }
-      } catch (error) {
-        console.error("Error during review verification:", error);
-        res.status(500).send({ message: "Failed to verify review" });
-      }
+      const updateDoc = {
+        $set: {
+          status: req.body.status, // should be 'verified'
+        },
+      };
+      const result = await eventReviewsCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
 
     // Delete a review
@@ -814,8 +808,6 @@ async function run() {
       if (previousSeat) {
         allSeat = [...previousSeat, ...newSeat];
       }
-
-      console.log("-------------------------------------------------", allSeat);
       const updateResult = await busTicketCollection.updateOne(query, {
         $set: { bookedSeats: allSeat },
       });
@@ -836,7 +828,36 @@ async function run() {
       res.send(result);
     });
 
+    // flash deals api
+    app.get("/bus-flash-deal", async (req, res) => {
+      const result = await busFlashDealCollection.find().toArray();
+      // console.log(result)
+      res.send(result);
+    });
+
     // -------------Tavel API End----------------
+
+    // ------------- Stripe Payment----------
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+
+      if (!price) {
+        return;
+      }
+
+      const amount = parseInt(price * 100);
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+    // ------------- Stripe Payment----------
 
     // await client.db("admin").command({ ping: 1 });
     // console.log(
