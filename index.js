@@ -29,9 +29,6 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-//ezyticket
-//ceIzda5WkyaCgaJy
-
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ome3u.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 const uri = `${process.env.DB_URI}`;
 
@@ -61,7 +58,7 @@ const verifyToken = (req, res, next) => {
 
 async function run() {
   try {
-    // await client.connect();
+    await client.connect();
     // Send a ping to confirm a successful connection
     const userCollection = client.db("ezyTicket").collection("users");
     const eventCollection = client.db("ezyTicket").collection("events");
@@ -200,6 +197,84 @@ async function run() {
       });
     });
 
+    //  bus payment
+    app.post("/order/bus", async (req, res) => {
+      const orderData = req.body;
+      const data = {
+        total_amount: orderData.totalPrices,
+        currency: "BDT",
+        tran_id: tran_id, // use unique tran_id for each api call
+        success_url: `${process.env.server}/bus/payment/success/${tran_id}`,
+        fail_url: `${process.env.server}/payment/fail/${tran_id}`,
+        cancel_url: "http://localhost:3000/cancel",
+        ipn_url: "http://localhost:3030/ipn",
+        shipping_method: "Courier",
+        product_name: "Computer.",
+        product_category: "tickets",
+        product_profile: "general",
+        cus_name: orderData.name,
+        cus_email: orderData.email,
+        cus_add1: orderData.address,
+        cus_add2: "Dhaka",
+        cus_city: "Dhaka",
+        cus_state: "Dhaka",
+        cus_postcode: "1000",
+        cus_country: "Bangladesh",
+        cus_phone: orderData.number,
+        cus_fax: "01711111111",
+        ship_name: "Customer Name",
+        ship_add1: "Dhaka",
+        ship_add2: "Dhaka",
+        ship_city: "Dhaka",
+        ship_state: "Dhaka",
+        ship_postcode: 1000,
+        ship_country: "Bangladesh",
+      };
+
+      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+      sslcz.init(data).then((apiResponse) => {
+        console.log("API Response:", apiResponse);
+        // Redirect the user to payment gateway system
+        let GatewayPageURL = apiResponse.GatewayPageURL;
+        res.send({ url: GatewayPageURL });
+
+        const paymentTime = new Date().toLocaleString("en-BD", {
+          timeZone: "Asia/Dhaka",
+          hour12: true,
+        });
+
+        const order = {
+          name: orderData?.name,
+          email: orderData.email,
+          phone: orderData.email,
+          address: orderData?.address,
+          price: orderData.totalPrices,
+          product: "",
+          unitPrice: orderData.seatPrice,
+          charge: orderData.seatPrice + 0.05,
+          productCategory: [],
+          productId: tran_id,
+          quantity: orderData.selectedSeats.length,
+          routeAndDateAndTime: orderData?.routeAndDateAndTime,
+          status: "pending",
+          paymentMethod: "card",
+          date: orderData?.buyDate
+        };
+
+        const finalOrder = {
+          order,
+          paidStatus: false,
+          transactionId: tran_id,
+          paymentTime: paymentTime,
+        };
+        const result = orderCollection.insertOne(finalOrder);
+        const busPayment = busPaymentCollection.insertOne({...orderData, transactionId: tran_id,})
+
+        console.log("Redirecting to: ", GatewayPageURL);
+      });
+    });
+   
+
     //Successful Payment
     app.post("/payment/success/:tran_id", async (req, res) => {
       console.log(req.params.tran_id);
@@ -215,6 +290,30 @@ async function run() {
       if (result.modifiedCount > 0) {
         res.redirect(
           `${process.env.client}/payment/success/${req.params.tran_id}`
+        );
+      }
+    });
+
+    
+    // bus success
+
+    app.post("/bus/payment/success/:tran_id", async (req, res) => {
+      console.log(req.params.tran_id);
+
+
+
+      const result = await orderCollection.updateOne(
+        { transactionId: req.params.tran_id },
+        {
+          $set: {
+            paidStatus: true,
+          },
+        }
+      );
+
+      if (result.modifiedCount > 0) {
+        res.redirect(
+          `${process.env.client}/travel-payment-success/${req.params.tran_id}`
         );
       }
     });
@@ -868,15 +967,15 @@ async function run() {
       });
 
       res.send({
-        clientSecret: paymentIntent.client_secret,
-      });
-    });
-    // ------------- Stripe Payment----------
+        clientSecret: paymentIntent.client_secret
+      })
+    })
+    // ------------- Stripe Payments----------
 
-    // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!"
-    // );
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error.
     // await client.close();
