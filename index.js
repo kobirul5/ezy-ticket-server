@@ -330,6 +330,19 @@ async function run() {
       }
     });
 
+    app.get("/order", async (req, res) => {
+      try {
+        const { email } = req.query; 
+        const allOrders = await orderCollection.find({ email: email, paidStatus: true }).toArray();
+        res.status(200).json(allOrders);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+        res.status(500).send("Error fetching orders");
+      }
+    });
+    
+    
+
     //Get Order using transaction Id
     app.get("/order/:id", async (req, res) => {
       const transactionId = req.params.id;
@@ -662,7 +675,9 @@ async function run() {
         return res.status(500).send({ message: "Database not initialized" });
       }
       try {
-        const events = await eventCollection.find({ advertise: true }).toArray();
+        const events = await eventCollection
+          .find({ advertise: true })
+          .toArray();
         res.send(events);
       } catch (error) {
         console.error("Error fetching events:", error);
@@ -961,7 +976,7 @@ async function run() {
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
-        payment_method_types: ["card"]
+        payment_method_types: ["card"],
       });
 
       res.send({
