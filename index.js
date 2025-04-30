@@ -332,8 +332,8 @@ async function run() {
 
     app.get("/order", async (req, res) => {
       try {
-        const { email } = req.query; 
-        const allOrders = await orderCollection.find({ email: email, paidStatus: true }).toArray();
+       
+        const allOrders = await orderCollection.find({  paidStatus: true }).toArray();
         res.status(200).json(allOrders);
       } catch (error) {
         console.error("Error fetching orders:", error);
