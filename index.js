@@ -120,7 +120,7 @@ async function run() {
     /* --------------------------------------------------------------
                                 JWT ENDS HERE
     -------------------------------------------------------------- */
-    //  Save user info to database when user login
+    //  Save user info to database when user login--***
     app.post("/users/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -258,7 +258,7 @@ async function run() {
           routeAndDateAndTime: orderData?.routeAndDateAndTime,
           status: "pending",
           paymentMethod: "card",
-          date: orderData?.buyDate
+          date: orderData?.buyDate,
         };
 
         const finalOrder = {
@@ -268,12 +268,14 @@ async function run() {
           paymentTime: paymentTime,
         };
         const result = orderCollection.insertOne(finalOrder);
-        const busPayment = busPaymentCollection.insertOne({...orderData, transactionId: tran_id,})
+        const busPayment = busPaymentCollection.insertOne({
+          ...orderData,
+          transactionId: tran_id,
+        });
 
         console.log("Redirecting to: ", GatewayPageURL);
       });
     });
-   
 
     //Successful Payment
     app.post("/payment/success/:tran_id", async (req, res) => {
@@ -294,13 +296,10 @@ async function run() {
       }
     });
 
-    
     // bus success
 
     app.post("/bus/payment/success/:tran_id", async (req, res) => {
       console.log(req.params.tran_id);
-
-
 
       const result = await orderCollection.updateOne(
         { transactionId: req.params.tran_id },
@@ -332,16 +331,15 @@ async function run() {
 
     app.get("/order", async (req, res) => {
       try {
-       
-        const allOrders = await orderCollection.find({  paidStatus: true }).toArray();
+        const allOrders = await orderCollection
+          .find({ paidStatus: true })
+          .toArray();
         res.status(200).json(allOrders);
       } catch (error) {
         console.error("Error fetching orders:", error);
         res.status(500).send("Error fetching orders");
       }
     });
-    
-    
 
     //Get Order using transaction Id
     app.get("/order/:id", async (req, res) => {
@@ -364,7 +362,7 @@ async function run() {
       res.send(result);
     });
 
-    //get all users
+    //get all users--***
     app.get("/users", async (req, res) => {
       try {
         const users = await userCollection.find().toArray();
@@ -374,7 +372,7 @@ async function run() {
       }
     });
 
-    //get current userInfo
+    //get current userInfo--***
     app.get("/users/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
@@ -382,7 +380,7 @@ async function run() {
       res.send(user);
     });
 
-    // Update user role.
+    // Update user role.--**
     app.patch("/users/role/:id", async (req, res) => {
       try {
         const id = req.params.id;
@@ -410,7 +408,7 @@ async function run() {
       }
     });
 
-    // Delete User
+    // Delete User--**
     app.delete("/users/:id", verifyToken, async (req, res) => {
       try {
         const id = req.params.id;
@@ -430,7 +428,7 @@ async function run() {
       }
     });
 
-    //Update User Profile
+    //Update User Profile--**
     app.patch("/users/:email", async (req, res) => {
       const email = req.params.email;
       const updateData = req.body;
@@ -656,6 +654,7 @@ async function run() {
     });
 
     // ------------Events API-------------
+    //Get all events--**
     app.get("/events", async (req, res) => {
       if (!eventCollection) {
         return res.status(500).send({ message: "Database not initialized" });
@@ -684,7 +683,7 @@ async function run() {
         res.status(500).send({ message: "Failed to fetch events", error });
       }
     });
-
+    //get Single event by id--**
     app.get("/events/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
@@ -936,10 +935,10 @@ async function run() {
     });
 
     // sold Tickets api
-    app.get("/sold-ticket", async (req,res)=>{
+    app.get("/sold-ticket", async (req, res) => {
       const result = await busPaymentCollection.find().toArray();
       res.send(result);
-    })
+    });
 
     //bus services added from here
 
@@ -980,9 +979,9 @@ async function run() {
       });
 
       res.send({
-        clientSecret: paymentIntent.client_secret
-      })
-    })
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
     // ------------- Stripe Payments----------
 
     await client.db("admin").command({ ping: 1 });
