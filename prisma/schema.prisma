@@ -13,17 +13,155 @@ model User {
   email      String     @unique
   password   String?
   role       Role       @default(USER)
-  phone      String
+  phone      String?
   picture    String?
   status     UserStatus @default(ACTIVE)
   isVerified Boolean    @default(false)
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
+
+  events    Event[]
+  reviews   EventReview[]
+  orders    Order[]
+  wishlists Wishlist[]
+}
+
+model Event {
+  id           Int      @id @default(autoincrement())
+  title        String
+  eventType    String
+  eventDate    String
+  eventTime    String
+  duration     String
+  price        Float
+  totalTickets Int
+  location     String
+  details      String
+  managerEmail String
+  status       String   @default("pending") // pending, verified, rejected
+  advertise    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  manager User @relation(fields: [managerEmail], references: [email])
+
+  reviews   EventReview[]
+  wishlists Wishlist[]
+}
+
+model EventReview {
+  id            Int      @id @default(autoincrement())
+  eventId       Int
+  eventName     String
+  comment       String
+  customerEmail String
+  customerName  String
+  customerPhoto String?
+  time          String
+  category      String
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+
+  event    Event @relation(fields: [eventId], references: [id])
+  customer User  @relation(fields: [customerEmail], references: [email])
+}
+
+model CinemaHall {
+  id         Int      @id @default(autoincrement())
+  name       String
+  location   String
+  totalSeats Int
+  price      Float
+  facilities String[]
+  email      String
+  image      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  movies Movie[] @relation("CinemaHallToMovie")
+}
+
+model Movie {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  duration    String
+  category    String
+  genre       String
+  actors      String[]
+  releaseDate String
+  language    String
+  director    String
+  imageLink   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cinemaHalls CinemaHall[] @relation("CinemaHallToMovie")
+}
+
+model BusService {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  contact   String
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BusTicket {
+  id          Int      @id @default(autoincrement())
+  from        String
+  to          String
+  busName     String
+  busType     String
+  departure   String
+  arrival     String
+  price       Float
+  totalSeats  Int
+  bookedSeats String[]
+  date        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id            Int      @id @default(autoincrement())
+  userId        Int?
+  customerEmail String
+  productName   String
+  totalAmount   Float
+  currency      String   @default("BDT")
+  tranId        String   @unique
+  paidStatus    Boolean  @default(false)
+  paymentMethod String   @default("SSLCOMMERZ") // SSLCOMMERZ, STRIPE
+  paymentTime   String?
+  status        String   @default("pending")
+  orderData     Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User? @relation(fields: [customerEmail], references: [email])
+}
+
+model Wishlist {
+  id        Int      @id @default(autoincrement())
+  userEmail String
+  eventId   Int
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userEmail], references: [email])
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@unique([userEmail, eventId])
 }
 
 enum Role {
   SUPER_ADMIN
   ADMIN
+  EVENT_MANAGER
+  TRAVEL_MANAGER
+  ENTERTAINMENT_MANAGER
   USER
 }
 
