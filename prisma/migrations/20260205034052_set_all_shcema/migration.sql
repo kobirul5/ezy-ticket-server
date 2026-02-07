@@ -1,8 +1,8 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'EVENT_MANAGER', 'TRAVEL_MANAGER', 'ENTERTAINMENT_MANAGER', 'USER');
+CREATE TYPE "Role" AS ENUM ("SUPER_ADMIN", "ADMIN", "EVENT_MANAGER", "TRAVEL_MANAGER", "ENTERTAINMENT_MANAGER", "USER");
 
 -- CreateEnum
-CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'BLOCKED', 'SUSPENDED');
+CREATE TYPE "UserStatus" AS ENUM ("ACTIVE", "INACTIVE", "BLOCKED", "SUSPENDED");
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -10,10 +10,10 @@ CREATE TABLE "User" (
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT,
-    "role" "Role" NOT NULL DEFAULT 'USER',
+    "role" "Role" NOT NULL DEFAULT "USER",
     "phone" TEXT,
     "picture" TEXT,
-    "status" "UserStatus" NOT NULL DEFAULT 'ACTIVE',
+    "status" "UserStatus" NOT NULL DEFAULT "ACTIVE",
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE "Event" (
     "location" TEXT NOT NULL,
     "details" TEXT NOT NULL,
     "managerEmail" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'pending',
+    "status" TEXT NOT NULL DEFAULT "pending",
     "advertise" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE "EventReview" (
     "customerPhoto" TEXT,
     "time" TEXT NOT NULL,
     "category" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'pending',
+    "status" TEXT NOT NULL DEFAULT "pending",
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "EventReview_pkey" PRIMARY KEY ("id")
@@ -133,12 +133,12 @@ CREATE TABLE "Order" (
     "customerEmail" TEXT NOT NULL,
     "productName" TEXT NOT NULL,
     "totalAmount" DOUBLE PRECISION NOT NULL,
-    "currency" TEXT NOT NULL DEFAULT 'BDT',
+    "currency" TEXT NOT NULL DEFAULT "BDT",
     "tranId" TEXT NOT NULL,
     "paidStatus" BOOLEAN NOT NULL DEFAULT false,
-    "paymentMethod" TEXT NOT NULL DEFAULT 'SSLCOMMERZ',
+    "paymentMethod" TEXT NOT NULL DEFAULT "SSLCOMMERZ",
     "paymentTime" TEXT,
-    "status" TEXT NOT NULL DEFAULT 'pending',
+    "status" TEXT NOT NULL DEFAULT "pending",
     "orderData" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

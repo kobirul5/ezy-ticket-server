@@ -68,7 +68,7 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const filters = { searchTerm: req.query.searchTerm as string, ...req.query };
   // remove non-filter fields from filters object manually or use pick
   const filterData = { ...req.query };
-  const excludeFields = ['page', 'limit', 'sortBy', 'sortOrder', 'searchTerm'];
+  const excludeFields = ["page", "limit", "sortBy", "sortOrder", "searchTerm"];
   excludeFields.forEach(field => delete (filterData as any)[field]);
   const finalFilters = { searchTerm: req.query.searchTerm as string, ...filterData };
 
@@ -78,8 +78,8 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const options = {
     page: Number(req.query.page || 1),
     limit: Number(req.query.limit || 10),
-    sortBy: req.query.sortBy as string || 'createdAt',
-    sortOrder: req.query.sortOrder as string || 'desc'
+    sortBy: req.query.sortBy as string || "createdAt",
+    sortOrder: req.query.sortOrder as string || "desc"
   };
 
   const result = await UserService.getAllUsers(finalFilters, options);

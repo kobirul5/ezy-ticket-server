@@ -38,7 +38,7 @@ const optionalAuth = (...roles: string[]) => {
       // Attach the user to the request object
       req.user = verifiedUser as JwtPayload;
 
-      // If roles are provided, check if the user's role is allowed
+      // If roles are provided, check if the user"s role is allowed
       if (roles.length && !roles.includes(verifiedUser.role)) {
         throw new ApiError(httpStatus.FORBIDDEN, "Forbidden!");
       }
