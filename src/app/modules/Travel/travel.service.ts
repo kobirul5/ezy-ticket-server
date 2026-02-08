@@ -50,8 +50,8 @@ const deleteBusService = async (id: number) => {
     return result;
 };
 
-const createBusTicket = async (data: any) => {
-  const result = await prisma.busTicket.create({
+const createBusSchedule = async (data: any) => {
+  const result = await prisma.busSchedule.create({
     data,
   });
   return result;
@@ -59,50 +59,109 @@ const createBusTicket = async (data: any) => {
 
 const getAllBusTickets = async (filters: IBusTicketFilterRequest) => {
   const { searchTerm, from, to, date } = filters;
-  const result = await prisma.busTicket.findMany({
+
+  // 1. Find matching BusServices
+  const busServices = await prisma.busService.findMany({
     where: {
       AND: [
-        from ? { from: { contains: from, mode: "insensitive" } } : {},
-        to ? { to: { contains: to, mode: "insensitive" } } : {},
-        date ? { date: { equals: date } } : {},
+        from ? { departureLocation: { has: from } } : {},
+        to ? { destinationLocation: { has: to } } : {},
         searchTerm ? {
           OR: [
-            { busName: { contains: searchTerm, mode: "insensitive" } },
-            { from: { contains: searchTerm, mode: "insensitive" } },
-            { to: { contains: searchTerm, mode: "insensitive" } },
+            { name: { contains: searchTerm, mode: "insensitive" } },
+            { departureLocation: { has: searchTerm } },
+            { destinationLocation: { has: searchTerm } },
           ],
         } : {},
       ],
     },
   });
-  return result;
+
+  // 2. Expand into individual trips based on travelTime
+  const trips: any[] = [];
+
+  for (const bus of busServices) {
+    // Check if date is in travelOffDates
+    if (date && bus.travelOffDates.some(offDate => 
+      new Date(offDate).toISOString().split('T')[0] === date
+    )) {
+      continue;
+    }
+
+    for (const time of bus.travelTime) {
+      // 3. Find existing schedule for this specific trip
+      const schedule = await prisma.busSchedule.findFirst({
+        where: {
+          busServiceId: bus.id,
+          time: time,
+        }
+      });
+
+      trips.push({
+        id: schedule?.id || `virtual-${bus.id}-${date}-${time}`,
+        busName: bus.name,
+        busType: bus.busType,
+        from: from || bus.departureLocation[0],
+        to: to || bus.destinationLocation[0],
+        departure: time,
+        arrival: "TBD", // Could be calculated
+        price: bus.price,
+        totalSeats: bus.totalSeats,
+        bookedSeats: schedule?.bookedSeats || [],
+        date: date || "",
+        busServiceId: bus.id,
+        image: bus.image,
+        isVirtual: !schedule,
+      });
+    }
+  }
+
+  return trips;
 };
 
-const updateBookedSeats = async (id: number, seats: string[]) => {
-  const ticket = await prisma.busTicket.findUnique({ where: { id } });
-  if (!ticket) throw new Error("Ticket not found");
+const updateBookedSeats = async (scheduleId: number, seats: string[]) => {
+  const schedule = await prisma.busSchedule.findUnique({ where: { id: scheduleId } });
+  if (!schedule) throw new Error("Schedule not found");
 
-  const result = await prisma.busTicket.update({
-    where: { id },
+  const result = await prisma.busSchedule.update({
+    where: { id: scheduleId },
     data: {
       bookedSeats: {
-        set: [...ticket.bookedSeats, ...seats],
+        set: Array.from(new Set([...schedule.bookedSeats, ...seats])),
       },
     },
   });
   return result;
 };
 
+const findOrCreateSchedule = async (busServiceId: number, date: string, time: string) => {
+  let schedule = await prisma.busSchedule.findFirst({
+    where: { busServiceId, time }
+  });
+
+  if (!schedule) {
+    schedule = await prisma.busSchedule.create({
+      data: {
+        busServiceId,
+        time,
+        bookedSeats: []
+      }
+    });
+  }
+
+  return schedule;
+};
+
 const getBusStands = async () => {
-  const tickets = await prisma.busTicket.findMany({
+  const services = await prisma.busService.findMany({
     select: {
-      from: true,
-      to: true,
+      departureLocation: true,
+      destinationLocation: true,
     },
   });
 
-  const fromStands = new Set(tickets.map((ticket) => ticket.from));
-  const toStands = new Set(tickets.map((ticket) => ticket.to));
+  const fromStands = new Set(services.flatMap((s) => s.departureLocation));
+  const toStands = new Set(services.flatMap((s) => s.destinationLocation));
 
   const uniqueStands = Array.from(new Set([...fromStands, ...toStands]));
   return uniqueStands;
@@ -116,12 +175,19 @@ const createTravelLocation = async (payload: TTravelLocation) => {
     return result;
 }
 
-const getAllTravelLocations = async () => {
+const getAllTravelLocations = async (searchTerm?: string) => {
     const result = await prisma.travelLocation.findMany({
+        where: searchTerm ? {
+            OR: [
+                { name: { contains: searchTerm, mode: 'insensitive' } },
+                { address: { contains: searchTerm, mode: 'insensitive' } }
+            ]
+        } : {},
         orderBy: {
             createdAt: 'desc'
         }
     })
+
     return result;
 }
 
@@ -132,9 +198,10 @@ export const TravelServices = {
   getBusById,
   updateBusService,
   deleteBusService,
-  createBusTicket,
+  createBusSchedule,
   getAllBusTickets,
   updateBookedSeats,
+  findOrCreateSchedule,
   getBusStands,
   createTravelLocation,
   getAllTravelLocations

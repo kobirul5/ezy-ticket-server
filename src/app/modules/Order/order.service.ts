@@ -60,7 +60,12 @@ const createOrder = async (data: any) => {
   return { url: apiResponse.GatewayPageURL, tranId };
 };
 
+import { TravelServices } from "../Travel/travel.service";
+
 const handlePaymentSuccess = async (tranId: string) => {
+  const order = await prisma.order.findUnique({ where: { tranId } });
+  if (!order) throw new Error("Order not found");
+
   const result = await prisma.order.update({
     where: { tranId },
     data: {
@@ -69,6 +74,30 @@ const handlePaymentSuccess = async (tranId: string) => {
       status: "completed",
     },
   });
+
+  // Handle Seat Booking for Bus Tickets
+  const orderData = order.orderData as any;
+  if (orderData?.verifyData === "bus") {
+    const { busPostId, selectedSeats, routeAndDateAndTime } = orderData;
+    let scheduleId: number;
+
+    if (typeof busPostId === "string" && busPostId.startsWith("virtual-")) {
+      // It's a virtual trip, create the schedule record
+      const busServiceId = parseInt(busPostId.split("-")[1]);
+      const date = routeAndDateAndTime.date;
+      const time = routeAndDateAndTime.time || busPostId.split("-")[3]; // Fallback to parsing ID
+      
+      const schedule = await TravelServices.findOrCreateSchedule(busServiceId, date, time);
+      scheduleId = schedule.id;
+    } else {
+      scheduleId = parseInt(busPostId);
+    }
+
+    if (scheduleId) {
+      await TravelServices.updateBookedSeats(scheduleId, selectedSeats);
+    }
+  }
+
   return result;
 };
 

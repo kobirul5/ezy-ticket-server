@@ -117,24 +117,19 @@ model BusService {
   userId              Int
   user                User       @relation(fields: [userId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  busSchedules BusSchedule[]
 }
 
-model BusTicket {
-  id          Int      @id @default(autoincrement())
-  from        String
-  to          String
-  busName     String
-  busType     BusType  @default(NON_AC)
-  departure   String
-  arrival     String
-  price       Float
-  totalSeats  Int
-  bookedSeats String[]
-  date        String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model BusSchedule {
+  id           Int        @id @default(autoincrement())
+  bookedSeats  String[]
+  time         String
+  busServiceId Int
+  busService   BusService @relation(fields: [busServiceId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
 enum BusType {

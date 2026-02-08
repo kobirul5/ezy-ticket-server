@@ -101,12 +101,12 @@ const deleteBusService = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const createBusTicket = catchAsync(async (req: Request, res: Response) => {
-  const result = await TravelServices.createBusTicket(req.body);
+const createBusSchedule = catchAsync(async (req: Request, res: Response) => {
+  const result = await TravelServices.createBusSchedule(req.body);
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: "Bus ticket created successfully",
+    message: "Bus schedule created successfully",
     data: result,
   });
 });
@@ -117,7 +117,7 @@ const getAllBusTickets = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Bus tickets fetched successfully",
+    message: "Bus trips fetched successfully",
     data: result,
   });
 });
@@ -143,7 +143,8 @@ const createTravelLocation = catchAsync(async (req: Request, res: Response) => {
 })
 
 const getAllTravelLocations = catchAsync(async (req: Request, res: Response) => {
-    const result = await TravelServices.getAllTravelLocations();
+    const { searchTerm } = req.query;
+    const result = await TravelServices.getAllTravelLocations(searchTerm as string);
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
@@ -159,7 +160,7 @@ export const TravelControllers = {
   getBusById,
   updateBusService,
   deleteBusService,
-  createBusTicket,
+  createBusSchedule,
   getAllBusTickets,
   getBusStands,
   createTravelLocation,
