@@ -16,6 +16,7 @@ const auth = (...roles: string[]) => {
   ) => {
     try {
       const token =  req.headers.authorization || req.cookies.token;
+      console.log(token, "------------------");
   
 
       if (!token) {

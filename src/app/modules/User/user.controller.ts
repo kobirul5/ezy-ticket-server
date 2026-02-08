@@ -8,7 +8,7 @@ import { fileUploader } from "../../../helpars/fileUploader";
 // get user profile
 const getMyProfile = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
-
+  console.log(userId, "------------------");
   const result = await UserService.getMyProfile(userId);
   sendResponse(res, {
     success: true,
