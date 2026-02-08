@@ -4,3 +4,9 @@ export type IBusTicketFilterRequest = {
   to?: string | undefined;
   date?: string | undefined;
 };
+
+
+export type TTravelLocation = {
+    name: string;
+    address: string;
+}

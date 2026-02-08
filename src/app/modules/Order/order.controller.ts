@@ -26,6 +26,17 @@ const paymentFail = catchAsync(async (req: Request, res: Response) => {
   res.redirect(`${process.env.CLIENT_URL}/payment/fail/${tranId}`);
 });
 
+const getOrder = catchAsync(async (req: Request, res: Response) => {
+    const { tranId } = req.params;
+    const result = await OrderServices.getOrderByTranId(tranId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Order fetched successfully",
+        data: result,
+    });
+})
+
 const getAllOrders = catchAsync(async (req: Request, res: Response) => {
   const result = await OrderServices.getAllOrders();
   sendResponse(res, {
@@ -40,5 +51,6 @@ export const OrderControllers = {
   createOrder,
   paymentSuccess,
   paymentFail,
+  getOrder,
   getAllOrders,
 };

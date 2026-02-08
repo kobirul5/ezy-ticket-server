@@ -56,10 +56,33 @@ const getBusStands = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createTravelLocation = catchAsync(async (req: Request, res: Response) => {
+    const result = await TravelServices.createTravelLocation(req.body);
+    sendResponse(res, {
+        statusCode: httpStatus.CREATED,
+        success: true,
+        message: "Travel Location Created Successfully",
+        data: result
+    })
+})
+
+const getAllTravelLocations = catchAsync(async (req: Request, res: Response) => {
+    const result = await TravelServices.getAllTravelLocations();
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Travel Locations Retrieved Successfully",
+        data: result
+    })
+})
+
+
 export const TravelControllers = {
   createBusService,
   getAllBusServices,
   createBusTicket,
   getAllBusTickets,
-  getBusStands
+  getBusStands,
+  createTravelLocation,
+  getAllTravelLocations
 };

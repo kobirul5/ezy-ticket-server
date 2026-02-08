@@ -1,5 +1,5 @@
 import { prisma } from "../../../lib/prisma";
-import { IBusTicketFilterRequest } from "./travel.interface";
+import { IBusTicketFilterRequest, TTravelLocation } from "./travel.interface";
 
 const createBusService = async (data: any) => {
   const result = await prisma.busService.create({
@@ -71,6 +71,24 @@ const getBusStands = async () => {
   return uniqueStands;
 };
 
+
+const createTravelLocation = async (payload: TTravelLocation) => {
+    const result = await prisma.travelLocation.create({
+        data: payload
+    })
+    return result;
+}
+
+const getAllTravelLocations = async () => {
+    const result = await prisma.travelLocation.findMany({
+        orderBy: {
+            createdAt: 'desc'
+        }
+    })
+    return result;
+}
+
+
 export const TravelServices = {
   createBusService,
   getAllBusServices,
@@ -78,4 +96,6 @@ export const TravelServices = {
   getAllBusTickets,
   updateBookedSeats,
   getBusStands,
+  createTravelLocation,
+  getAllTravelLocations
 };

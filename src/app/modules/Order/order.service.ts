@@ -82,6 +82,13 @@ const handlePaymentFail = async (tranId: string) => {
   return result;
 };
 
+const getOrderByTranId = async (tranId: string) => {
+    const result = await prisma.order.findUnique({
+        where: { tranId }
+    })
+    return result;
+}
+
 const getAllOrders = async () => {
   return await prisma.order.findMany({
     where: { paidStatus: true },
@@ -93,5 +100,6 @@ export const OrderServices = {
   createOrder,
   handlePaymentSuccess,
   handlePaymentFail,
+  getOrderByTranId,
   getAllOrders,
 };

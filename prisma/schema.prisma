@@ -172,3 +172,11 @@ enum UserStatus {
   BLOCKED
   SUSPENDED
 }
+
+model TravelLocation {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
