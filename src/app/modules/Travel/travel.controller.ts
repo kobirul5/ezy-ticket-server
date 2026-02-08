@@ -46,9 +46,20 @@ const getAllBusTickets = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getBusStands = catchAsync(async (req: Request, res: Response) => {
+  const result = await TravelServices.getBusStands();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Bus stands fetched successfully",
+    data: result,
+  });
+});
+
 export const TravelControllers = {
   createBusService,
   getAllBusServices,
   createBusTicket,
   getAllBusTickets,
+  getBusStands
 };

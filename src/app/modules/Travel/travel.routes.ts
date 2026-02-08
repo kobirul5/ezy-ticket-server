@@ -9,5 +9,6 @@ router.post("/services", auth("ADMIN", "TRAVEL_MANAGER"), TravelControllers.crea
 
 router.get("/tickets", TravelControllers.getAllBusTickets);
 router.post("/tickets", auth("ADMIN", "TRAVEL_MANAGER"), TravelControllers.createBusTicket);
+router.get("/stand", TravelControllers.getBusStands);
 
 export const TravelRoutes = router;

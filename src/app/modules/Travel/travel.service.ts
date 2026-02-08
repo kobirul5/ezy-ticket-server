@@ -56,10 +56,26 @@ const updateBookedSeats = async (id: number, seats: string[]) => {
   return result;
 };
 
+const getBusStands = async () => {
+  const tickets = await prisma.busTicket.findMany({
+    select: {
+      from: true,
+      to: true,
+    },
+  });
+
+  const fromStands = new Set(tickets.map((ticket) => ticket.from));
+  const toStands = new Set(tickets.map((ticket) => ticket.to));
+
+  const uniqueStands = Array.from(new Set([...fromStands, ...toStands]));
+  return uniqueStands;
+};
+
 export const TravelServices = {
   createBusService,
   getAllBusServices,
   createBusTicket,
   getAllBusTickets,
   updateBookedSeats,
+  getBusStands,
 };
