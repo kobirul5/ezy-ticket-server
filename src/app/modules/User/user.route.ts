@@ -1,6 +1,6 @@
 import express from "express";
 import auth from "../../middlewares/auth";
-import { fileUploader } from "../../../helpars/fileUploader";
+import { FileUploadHelper } from "../../../helpars/fileUploadHelper";
 import { UserController } from "./user.controller";
 import { checkBlockedStatus } from "../../middlewares/checkBlock";
 
@@ -20,7 +20,7 @@ router.get("/profile", auth(), checkBlockedStatus, UserController.getMyProfile);
 router.put(
   "/update-profile",
   auth(),
-  fileUploader.upload.fields([{ name: "image", maxCount: 1 }]),
+  FileUploadHelper.upload.single("image"),
   UserController.updateUser
 );
 router.put("/role-change", auth(), UserController.changeUserRole);

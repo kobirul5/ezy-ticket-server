@@ -3,6 +3,7 @@ import httpStatus from "http-status";
 import { prisma } from "../../../lib/prisma";
 import { Prisma, UserStatus } from "../../../generated/prisma/client";
 import ApiError from "../../../errors/ApiErrors";
+import { FileUploadHelper } from "../../../helpars/fileUploadHelper";
 
 const getMyProfile = async (userId: number) => {
   const result = await prisma.user.findUnique({
@@ -16,10 +17,13 @@ const getMyProfile = async (userId: number) => {
 const updateUser = async (
   userId: number,
   updateData: Partial<Prisma.UserUpdateInput>,
-  imageUrl?: string
+  file?: any
 ) => {
-  if (imageUrl) {
-    updateData.picture = imageUrl;
+  if (file) {
+      const uploaded = await FileUploadHelper.uploadToCloudinary(file);
+      if (uploaded?.secure_url) {
+        updateData.picture = uploaded.secure_url;
+      }
   }
 
   const result = await prisma.user.update({

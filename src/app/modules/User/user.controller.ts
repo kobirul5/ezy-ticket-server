@@ -3,7 +3,7 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { Request, Response } from "express";
 import { UserService } from "./user.services";
-import { fileUploader } from "../../../helpars/fileUploader";
+import { FileUploadHelper } from "../../../helpars/fileUploadHelper";
 
 // get user profile
 const getMyProfile = catchAsync(async (req: Request, res: Response) => {
@@ -20,23 +20,22 @@ const getMyProfile = catchAsync(async (req: Request, res: Response) => {
 
 // update user profile
 const updateUser = catchAsync(async (req: Request, res: Response) => {
-  const userToken = req.headers.authorization;
-  const updateData = req.body;
-  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-  let imageUrl: string | undefined;
+  let updateData = req.body;
 
-  // Handle profile image upload
-  if (files?.image?.[0]) {
-    const uploaded = await fileUploader.uploadToDigitalOcean(files.image[0]);
-    imageUrl = uploaded.Location;
+  if (req.body.data) {
+     updateData = JSON.parse(req.body.data);
   }
 
-  // Call the service to update the user
+  console.log("-------------------", updateData, "------------------");
+
+  const file = req.file;
+
+  // Call the service with userId, data, and file
   const result = await UserService.updateUser(
     req.user.id,
     updateData,
-    imageUrl
+    file
   );
 
   sendResponse(res, {
