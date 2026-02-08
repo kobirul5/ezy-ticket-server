@@ -1,14 +1,32 @@
 import express from "express";
 import { TravelControllers } from "./travel.controller";
 import auth from "../../middlewares/auth";
+import { FileUploadHelper } from "../../../helpars/fileUploadHelper";
 
 const router = express.Router();
 
-router.get("/services", TravelControllers.getAllBusServices);
-router.post("/services", auth("ADMIN", "TRAVEL_MANAGER"), TravelControllers.createBusService);
+router.get("/bus", auth("ADMIN", "TRAVEL_MANAGER", "USER"), TravelControllers.getAllBusServices);
+router.get("/bus/:id", auth("ADMIN", "TRAVEL_MANAGER", "USER"), TravelControllers.getBusById);
+router.post(
+  "/bus-create",
+  auth("ADMIN", "TRAVEL_MANAGER"),
+  FileUploadHelper.upload.single("file"),
+  TravelControllers.createBusService
+);
+router.put(
+  "/bus/:id",
+  auth("ADMIN", "TRAVEL_MANAGER"),
+  FileUploadHelper.upload.single("file"),
+  TravelControllers.updateBusService
+);
+router.delete(
+  "/bus/:id",
+  auth("ADMIN", "TRAVEL_MANAGER"),
+  TravelControllers.deleteBusService
+);
 
-router.get("/tickets", TravelControllers.getAllBusTickets);
-router.post("/tickets", auth("ADMIN", "TRAVEL_MANAGER"), TravelControllers.createBusTicket);
+router.get("/bus-ticket", TravelControllers.getAllBusTickets);
+router.post("/bus-ticket", auth("ADMIN", "TRAVEL_MANAGER"), TravelControllers.createBusTicket);
 router.get("/stand", TravelControllers.getBusStands);
 
 // 

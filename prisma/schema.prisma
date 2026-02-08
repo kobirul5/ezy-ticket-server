@@ -21,10 +21,11 @@ model User {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
-  events    Event[]
-  reviews   EventReview[]
-  orders    Order[]
-  wishlists Wishlist[]
+  events      Event[]
+  reviews     EventReview[]
+  orders      Order[]
+  wishlists   Wishlist[]
+  busServices BusService[]
 }
 
 model Event {
@@ -101,11 +102,21 @@ model Movie {
 }
 
 model BusService {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String
-  contact   String
-  image     String?
+  id                  Int        @id @default(autoincrement())
+  name                String
+  email               String
+  busType             BusType    @default(NON_AC)
+  contact             String
+  travelTime          String[]
+  travelOffDates      DateTime[]
+  image               String?
+  totalSeats          Int        @default(52)
+  price               Float      @default(350)
+  departureLocation   String[]
+  destinationLocation String[]
+  userId              Int
+  user                User       @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -115,7 +126,7 @@ model BusTicket {
   from        String
   to          String
   busName     String
-  busType     String
+  busType     BusType  @default(NON_AC)
   departure   String
   arrival     String
   price       Float
@@ -124,6 +135,11 @@ model BusTicket {
   date        String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+enum BusType {
+  AC
+  NON_AC
 }
 
 model Order {

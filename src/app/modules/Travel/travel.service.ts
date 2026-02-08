@@ -2,15 +2,52 @@ import { prisma } from "../../../lib/prisma";
 import { IBusTicketFilterRequest, TTravelLocation } from "./travel.interface";
 
 const createBusService = async (data: any) => {
-  const result = await prisma.busService.create({
-    data,
+    // If travelOffDates are provided as strings, convert them to Date objects
+    if (data.travelOffDates && Array.isArray(data.travelOffDates)) {
+        data.travelOffDates = data.travelOffDates.map((date: string) => new Date(date));
+    }
+
+    const result = await prisma.busService.create({
+        data,
+    });
+    return result;
+};
+
+const getAllBusServices = async (userId?: number) => {
+  const result = await prisma.busService.findMany({
+    where: userId ? { userId } : {},
+    orderBy: {
+        createdAt: 'desc'
+    }
   });
   return result;
 };
 
-const getAllBusServices = async () => {
-  const result = await prisma.busService.findMany();
+const getBusById = async (id: number) => {
+  const result = await prisma.busService.findUnique({
+    where: { id },
+  });
   return result;
+};
+
+const updateBusService = async (id: number, data: any) => {
+    // If travelOffDates are provided as strings, convert them to Date objects
+    if (data.travelOffDates && Array.isArray(data.travelOffDates)) {
+        data.travelOffDates = data.travelOffDates.map((date: string) => new Date(date));
+    }
+
+    const result = await prisma.busService.update({
+        where: { id },
+        data,
+    });
+    return result;
+};
+
+const deleteBusService = async (id: number) => {
+    const result = await prisma.busService.delete({
+        where: { id },
+    });
+    return result;
 };
 
 const createBusTicket = async (data: any) => {
@@ -92,6 +129,9 @@ const getAllTravelLocations = async () => {
 export const TravelServices = {
   createBusService,
   getAllBusServices,
+  getBusById,
+  updateBusService,
+  deleteBusService,
   createBusTicket,
   getAllBusTickets,
   updateBookedSeats,
