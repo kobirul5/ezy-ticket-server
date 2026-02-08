@@ -7,15 +7,34 @@ const createBusService = async (data: any) => {
         data.travelOffDates = data.travelOffDates.map((date: string) => new Date(date));
     }
 
+    const { travelTime, ...rest } = data;
+
     const result = await prisma.busService.create({
-        data,
+        data: rest,
     });
+
+    // Automatically create BusSchedule for each travelTime
+    if (travelTime && Array.isArray(travelTime)) {
+        const schedules = travelTime.map((time: string) => ({
+            busServiceId: result.id,
+            time: time,
+            bookedSeats: [],
+        }));
+
+        await prisma.busSchedule.createMany({
+            data: schedules,
+        });
+    }
+
     return result;
 };
 
 const getAllBusServices = async (userId?: number) => {
   const result = await prisma.busService.findMany({
     where: userId ? { userId } : {},
+    include: {
+        busSchedules: true
+    },
     orderBy: {
         createdAt: 'desc'
     }
@@ -26,6 +45,9 @@ const getAllBusServices = async (userId?: number) => {
 const getBusById = async (id: number) => {
   const result = await prisma.busService.findUnique({
     where: { id },
+    include: {
+        busSchedules: true
+    }
   });
   return result;
 };
@@ -36,10 +58,31 @@ const updateBusService = async (id: number, data: any) => {
         data.travelOffDates = data.travelOffDates.map((date: string) => new Date(date));
     }
 
+    const { travelTime, ...rest } = data;
+
     const result = await prisma.busService.update({
         where: { id },
-        data,
+        data: rest,
     });
+
+    if (travelTime && Array.isArray(travelTime)) {
+        // Sync schedules: Create missing ones
+        for (const time of travelTime) {
+            const existing = await prisma.busSchedule.findFirst({
+                where: { busServiceId: id, time }
+            });
+            if (!existing) {
+                await prisma.busSchedule.create({
+                    data: {
+                        busServiceId: id,
+                        time,
+                        bookedSeats: []
+                    }
+                });
+            }
+        }
+    }
+
     return result;
 };
 
@@ -60,63 +103,52 @@ const createBusSchedule = async (data: any) => {
 const getAllBusTickets = async (filters: IBusTicketFilterRequest) => {
   const { searchTerm, from, to, date } = filters;
 
-  // 1. Find matching BusServices
-  const busServices = await prisma.busService.findMany({
+  const schedules = await prisma.busSchedule.findMany({
     where: {
-      AND: [
-        from ? { departureLocation: { has: from } } : {},
-        to ? { destinationLocation: { has: to } } : {},
-        searchTerm ? {
-          OR: [
-            { name: { contains: searchTerm, mode: "insensitive" } },
-            { departureLocation: { has: searchTerm } },
-            { destinationLocation: { has: searchTerm } },
-          ],
-        } : {},
-      ],
+      busService: {
+        AND: [
+          from ? { departureLocation: { has: from } } : {},
+          to ? { destinationLocation: { has: to } } : {},
+          searchTerm ? {
+            OR: [
+              { name: { contains: searchTerm, mode: "insensitive" } },
+              { departureLocation: { has: searchTerm } },
+              { destinationLocation: { has: searchTerm } },
+            ],
+          } : {},
+        ],
+      },
+    },
+    include: {
+      busService: true,
     },
   });
 
-  // 2. Expand into individual trips based on travelTime
-  const trips: any[] = [];
-
-  for (const bus of busServices) {
-    // Check if date is in travelOffDates
-    if (date && bus.travelOffDates.some(offDate => 
-      new Date(offDate).toISOString().split('T')[0] === date
-    )) {
-      continue;
-    }
-
-    for (const time of bus.travelTime) {
-      // 3. Find existing schedule for this specific trip
-      const schedule = await prisma.busSchedule.findFirst({
-        where: {
-          busServiceId: bus.id,
-          time: time,
-        }
-      });
-
-      trips.push({
-        id: schedule?.id || `virtual-${bus.id}-${date}-${time}`,
-        busName: bus.name,
-        busType: bus.busType,
-        from: from || bus.departureLocation[0],
-        to: to || bus.destinationLocation[0],
-        departure: time,
-        arrival: "TBD", // Could be calculated
-        price: bus.price,
-        totalSeats: bus.totalSeats,
-        bookedSeats: schedule?.bookedSeats || [],
-        date: date || "",
-        busServiceId: bus.id,
-        image: bus.image,
-        isVirtual: !schedule,
-      });
-    }
-  }
-
-  return trips;
+  return schedules
+    .filter((schedule) => {
+      // 2. Filter by date using travelOffDates if provided
+      if (date && schedule.busService.travelOffDates.some(offDate => 
+        new Date(offDate).toISOString().split('T')[0] === date
+      )) {
+        return false;
+      }
+      return true;
+    })
+    .map((schedule) => ({
+      id: schedule.id,
+      busName: schedule.busService.name,
+      busType: schedule.busService.busType,
+      from: from || schedule.busService.departureLocation[0],
+      to: to || schedule.busService.destinationLocation[0],
+      departure: schedule.time,
+      arrival: "TBD",
+      price: schedule.busService.price,
+      totalSeats: schedule.busService.totalSeats,
+      bookedSeats: schedule.bookedSeats,
+      date: date || "",
+      busServiceId: schedule.busServiceId,
+      image: schedule.busService.image,
+    }));
 };
 
 const updateBookedSeats = async (scheduleId: number, seats: string[]) => {
