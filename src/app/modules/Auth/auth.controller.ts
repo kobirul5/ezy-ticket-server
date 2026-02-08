@@ -7,19 +7,10 @@ import { fileUploader } from "../../../helpars/fileUploader";
 import config from "../../../config";
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
-  // const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-  // let imageUrl: string | undefined;
-
-  // Handle profile image upload
-  // if (files?.image?.[0]) {
-  //   const uploaded = await fileUploader.uploadToDigitalOcean(files.image[0]);
-  //   imageUrl = uploaded.Location;
-  // }
-
-  // const parsData = JSON.parse(req.body.data);
 
   const parsData = req.body;
+
 
 
   const result = await AuthServices.createUserIntoDb({ ...parsData });

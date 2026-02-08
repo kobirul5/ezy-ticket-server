@@ -8,19 +8,20 @@ import { prisma } from "../../../lib/prisma";
 import ApiError from "../../../errors/ApiErrors";
 
 const createUserIntoDb = async (data: any) => {
+
   const hashedPassword = await bcrypt.hash(
     data.password,
     Number(config.bcrypt_salt_rounds)
   );
 
-  const userData = {
-    ...data,
-    password: hashedPassword,
-  };
-
   const result = await prisma.user.create({
-    data: userData,
-  });
+    data: {
+      name: data.name,
+      email: data.email,
+      password: hashedPassword,
+    },
+  })
+
 
   const token = jwtHelpers.generateToken(
     { id: result.id, role: result.role },
