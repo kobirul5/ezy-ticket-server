@@ -8,7 +8,6 @@ import { FileUploadHelper } from "../../../helpars/fileUploadHelper";
 // get user profile
 const getMyProfile = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
-  console.log(userId, "------------------");
   const result = await UserService.getMyProfile(userId);
   sendResponse(res, {
     success: true,
@@ -26,8 +25,6 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
   if (req.body.data) {
      updateData = JSON.parse(req.body.data);
   }
-
-  console.log("-------------------", updateData, "------------------");
 
   const file = req.file;
 

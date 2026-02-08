@@ -14,6 +14,7 @@ model User {
   password   String?
   role       Role       @default(USER)
   phone      String?
+  address    String?
   picture    String?
   status     UserStatus @default(ACTIVE)
   isVerified Boolean    @default(false)

@@ -10,16 +10,20 @@ cloudinary.config({
     api_secret: config.cloudinary.api_secret
 });
 
-const storage = multer.diskStorage({
+const uploadData = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/')
+        const uploadPath = 'uploads/';
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath)
     },
     filename: function (req, file, cb) {
         cb(null, file.originalname)
     }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ storage: uploadData });
 
 const uploadToCloudinary = async (file: IUploadFile): Promise<ICloudinaryResponse | undefined> => {
     return new Promise((resolve, reject) => {
