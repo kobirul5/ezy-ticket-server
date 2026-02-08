@@ -184,6 +184,16 @@ const findOrCreateSchedule = async (busServiceId: number, date: string, time: st
   return schedule;
 };
 
+const getScheduleById = async (id: number) => {
+  const result = await prisma.busSchedule.findUnique({
+    where: { id },
+    include: {
+      busService: true,
+    },
+  });
+  return result;
+};
+
 const getBusStands = async () => {
   const services = await prisma.busService.findMany({
     select: {
@@ -235,6 +245,7 @@ export const TravelServices = {
   updateBookedSeats,
   findOrCreateSchedule,
   getBusStands,
+  getScheduleById,
   createTravelLocation,
   getAllTravelLocations
 };

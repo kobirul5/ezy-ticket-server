@@ -27,6 +27,7 @@ router.delete(
 
 router.get("/bus-ticket", TravelControllers.getAllBusTickets);
 router.post("/bus-ticket", auth("ADMIN", "TRAVEL_MANAGER"), TravelControllers.createBusSchedule);
+router.get("/schedule/:id", TravelControllers.getScheduleById);
 router.get("/stand", TravelControllers.getBusStands);
 
 // 

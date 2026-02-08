@@ -132,6 +132,17 @@ const getBusStands = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getScheduleById = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await TravelServices.getScheduleById(Number(id));
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Bus schedule fetched successfully",
+    data: result,
+  });
+});
+
 const createTravelLocation = catchAsync(async (req: Request, res: Response) => {
     const result = await TravelServices.createTravelLocation(req.body);
     sendResponse(res, {
@@ -161,6 +172,7 @@ export const TravelControllers = {
   updateBusService,
   deleteBusService,
   createBusSchedule,
+  getScheduleById,
   getAllBusTickets,
   getBusStands,
   createTravelLocation,
