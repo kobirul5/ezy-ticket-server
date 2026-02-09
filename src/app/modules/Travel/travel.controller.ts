@@ -35,7 +35,7 @@ const createBusService = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getAllBusServices = catchAsync(async (req: Request, res: Response) => {
+const getAllMyBusServices = catchAsync(async (req: Request, res: Response) => {
   const user = (req as any).user;
   let userId = undefined;
   
@@ -43,7 +43,7 @@ const getAllBusServices = catchAsync(async (req: Request, res: Response) => {
     userId = Number(user.id);
   }
 
-  const result = await TravelServices.getAllBusServices(userId);
+  const result = await TravelServices.getAllMyBusServices(userId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -167,7 +167,7 @@ const getAllTravelLocations = catchAsync(async (req: Request, res: Response) => 
 
 export const TravelControllers = {
   createBusService,
-  getAllBusServices,
+  getAllMyBusServices,
   getBusById,
   updateBusService,
   deleteBusService,

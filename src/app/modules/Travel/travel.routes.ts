@@ -5,7 +5,7 @@ import { FileUploadHelper } from "../../../helpars/fileUploadHelper";
 
 const router = express.Router();
 
-router.get("/bus", auth("ADMIN", "TRAVEL_MANAGER", "USER"), TravelControllers.getAllBusServices);
+router.get("/bus", auth("ADMIN", "TRAVEL_MANAGER", "USER"), TravelControllers.getAllMyBusServices);
 router.get("/bus/:id", auth("ADMIN", "TRAVEL_MANAGER", "USER"), TravelControllers.getBusById);
 router.post(
   "/bus-create",

@@ -130,7 +130,16 @@ const changeUserRole = catchAsync(async (req: Request, res: Response) => {
 })
 
 
-
+const getUserByEmail = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.params;
+  const result = await UserService.getUserByEmail(email);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User retrieved successfully",
+    data: result,
+  });
+})
 
 export const UserController = {
   getMyProfile,
@@ -140,4 +149,5 @@ export const UserController = {
   changeUserRole,
   getAllUsers,
   suspendUser,
+  getUserByEmail
 };

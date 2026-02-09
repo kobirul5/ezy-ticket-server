@@ -29,7 +29,9 @@ const createBusService = async (data: any) => {
     return result;
 };
 
-const getAllBusServices = async (userId?: number) => {
+const getAllMyBusServices = async (userId?: number) => {
+
+
   const result = await prisma.busService.findMany({
     where: userId ? { userId } : {},
     include: {
@@ -236,7 +238,7 @@ const getAllTravelLocations = async (searchTerm?: string) => {
 
 export const TravelServices = {
   createBusService,
-  getAllBusServices,
+  getAllMyBusServices,
   getBusById,
   updateBusService,
   deleteBusService,

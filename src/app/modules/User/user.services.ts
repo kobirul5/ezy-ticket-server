@@ -125,6 +125,16 @@ const changeUserRole = async (userId: number, role: any) => {
   return result;
 };
 
+
+const getUserByEmail = async (email: string) => {
+  const result = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+  return result;
+}
+
 export const UserService = {
   getMyProfile,
   updateUser,
@@ -133,4 +143,5 @@ export const UserService = {
   suspendUser,
   removeUserByAdmin,
   changeUserRole,
+  getUserByEmail
 };
