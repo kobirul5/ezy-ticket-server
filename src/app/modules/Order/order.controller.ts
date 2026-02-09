@@ -3,6 +3,7 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import httpStatus from "http-status";
 import { OrderServices } from "./order.service";
+import config from "../../../config";
 
 const createOrder = catchAsync(async (req: Request, res: Response) => {
   const result = await OrderServices.createOrder(req.body);
@@ -17,13 +18,29 @@ const createOrder = catchAsync(async (req: Request, res: Response) => {
 const paymentSuccess = catchAsync(async (req: Request, res: Response) => {
   const { tranId } = req.params;
   await OrderServices.handlePaymentSuccess(tranId);
-  res.redirect(`${process.env.CLIENT_URL}/payment/success/${tranId}`);
+  res.redirect(`${config.client.url}/payment/success/${tranId}`);
 });
 
 const paymentFail = catchAsync(async (req: Request, res: Response) => {
   const { tranId } = req.params;
   await OrderServices.handlePaymentFail(tranId);
-  res.redirect(`${process.env.CLIENT_URL}/payment/fail/${tranId}`);
+  res.redirect(`${config.client.url}/payment/fail/${tranId}`);
+});
+
+const paymentCancel = catchAsync(async (req: Request, res: Response) => {
+  const { tranId } = req.params;
+  await OrderServices.handlePaymentCancel(tranId);
+  res.redirect(`${config.client.url}/payment/cancel/${tranId}`);
+});
+
+const paymentIPN = catchAsync(async (req: Request, res: Response) => {
+  const result = await OrderServices.handleIPN(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "IPN received successfully",
+    data: result,
+  });
 });
 
 const getOrder = catchAsync(async (req: Request, res: Response) => {
@@ -51,6 +68,8 @@ export const OrderControllers = {
   createOrder,
   paymentSuccess,
   paymentFail,
+  paymentCancel,
+  paymentIPN,
   getOrder,
   getAllOrders,
 };

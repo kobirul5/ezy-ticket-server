@@ -3,76 +3,91 @@ const SSLCommerzPayment = require("sslcommerz-lts");
 import config from "../../../config";
 
 const createOrder = async (data: any) => {
-  const { total_amount, cus_name, cus_email, cus_phone, cus_add1, productName, busPostId, eventId, verifyData } = data;
-  const tranId = `TRAN-${Date.now()}`;
+  try {
+    console.log("createOrder data received:", data);
+    const { total_amount, cus_name, cus_email, cus_phone, cus_add1, productName, busPostId, eventId, verifyData } = data;
+    const tranId = `TRAN-${Date.now()}`;
 
-  // Determine productId
-  let productId = 0;
-  if (busPostId) {
-    if (typeof busPostId === "string" && busPostId.startsWith("virtual-")) {
-      productId = parseInt(busPostId.split("-")[1]);
-    } else {
-      productId = parseInt(busPostId);
+    // Determine productId
+    let productId = 0;
+    if (busPostId) {
+      if (typeof busPostId === "string" && busPostId.startsWith("virtual-")) {
+        productId = parseInt(busPostId.split("-")[1]);
+      } else {
+        productId = parseInt(busPostId);
+      }
+    } else if (eventId) {
+      productId = parseInt(eventId);
     }
-  } else if (eventId) {
-    productId = parseInt(eventId);
+
+    const orderData = {
+      customerName: cus_name,
+      customerEmail: cus_email,
+      productId: productId,
+      productType: verifyData === "bus" ? "BUS" : (verifyData === "event" ? "EVENT" : "BUS"),
+      totalAmount: parseFloat(total_amount),
+      tranId: tranId,
+      paymentMethod: "SSLCOMMERZ",
+      orderData: data,
+    };
+
+    console.log("Creating order in Prisma with data:", orderData);
+    const result = await prisma.order.create({
+      data: orderData as any,
+    });
+    console.log("Prisma order created successfully:", result.id);
+
+    const paymentData = {
+      total_amount: total_amount,
+      currency: "BDT",
+      tran_id: tranId,
+      success_url: `${config.server_url}/api/v1/orders/payment/success/${tranId}`,
+      fail_url: `${config.server_url}/api/v1/orders/payment/fail/${tranId}`,
+      cancel_url: `${config.server_url}/api/v1/orders/payment/cancel/${tranId}`,
+      ipn_url: `${config.server_url}/api/v1/orders/payment/ipn`,
+      shipping_method: "Courier",
+      product_name: productName || "Ticket",
+      product_category: "Ticketing",
+      product_profile: "general",
+      cus_name: cus_name,
+      cus_email: cus_email,
+      cus_add1: cus_add1,
+      cus_add2: "Dhaka",
+      cus_city: "Dhaka",
+      cus_state: "Dhaka",
+      cus_postcode: "1000",
+      cus_country: "Bangladesh",
+      cus_phone: cus_phone,
+      cus_fax: "01711111111",
+      ship_name: "Customer Name",
+      ship_add1: "Dhaka",
+      ship_add2: "Dhaka",
+      ship_city: "Dhaka",
+      ship_state: "Dhaka",
+      ship_postcode: 1000,
+      ship_country: "Bangladesh",
+    };
+
+    console.log("Initializing SSLCommerz with data:", paymentData);
+    const sslcz = new SSLCommerzPayment(
+      config.sslcommerz.store_id,
+      config.sslcommerz.store_pass,
+      config.sslcommerz.is_live
+    );
+
+    const apiResponse = await sslcz.init(paymentData);
+    console.log("SSLCommerz init response:", apiResponse);
+    
+    if (apiResponse?.status === "SUCCESS") {
+        return { url: apiResponse.GatewayPageURL, tranId };
+    } else {
+        console.error("SSLCommerz init failed:", apiResponse);
+        throw new Error(apiResponse?.failedreason || "Payment initialization failed");
+    }
+  } catch (error) {
+    console.error("Error in createOrder service:", error);
+    throw error;
   }
-
-  const orderData = {
-    customerName: cus_name,
-    customerEmail: cus_email,
-    productId: productId,
-    productType: verifyData === "bus" ? "BUS" : (verifyData === "event" ? "EVENT" : "BUS"),
-    productName: productName || "Ticket",
-    totalAmount: parseFloat(total_amount),
-    tranId: tranId,
-    paymentMethod: "SSLCOMMERZ",
-    orderData: data,
-  };
-
-  const result = await prisma.order.create({
-    data: orderData as any,
-  });
-
-  const paymentData = {
-    total_amount: total_amount,
-    currency: "BDT",
-    tran_id: tranId,
-    success_url: `${process.env.SERVER_URL}/api/v1/orders/payment/success/${tranId}`,
-    fail_url: `${process.env.SERVER_URL}/api/v1/orders/payment/fail/${tranId}`,
-    cancel_url: `${process.env.SERVER_URL}/api/v1/orders/payment/cancel/${tranId}`,
-    ipn_url: `${process.env.SERVER_URL}/api/v1/orders/payment/ipn`,
-    shipping_method: "Courier",
-    product_name: productName || "Ticket",
-    product_category: "Ticketing",
-    product_profile: "general",
-    cus_name: cus_name,
-    cus_email: cus_email,
-    cus_add1: cus_add1,
-    cus_add2: "Dhaka",
-    cus_city: "Dhaka",
-    cus_state: "Dhaka",
-    cus_postcode: "1000",
-    cus_country: "Bangladesh",
-    cus_phone: cus_phone,
-    cus_fax: "01711111111",
-    ship_name: "Customer Name",
-    ship_add1: "Dhaka",
-    ship_add2: "Dhaka",
-    ship_city: "Dhaka",
-    ship_state: "Dhaka",
-    ship_postcode: 1000,
-    ship_country: "Bangladesh",
-  };
-
-  const sslcz = new SSLCommerzPayment(
-    process.env.STORE_ID,
-    process.env.STORE_PASS,
-    false // true for live, false for sandbox
-  );
-
-  const apiResponse = await sslcz.init(paymentData);
-  return { url: apiResponse.GatewayPageURL, tranId };
 };
 
 import { TravelServices } from "../Travel/travel.service";
@@ -80,6 +95,8 @@ import { TravelServices } from "../Travel/travel.service";
 const handlePaymentSuccess = async (tranId: string) => {
   const order = await prisma.order.findUnique({ where: { tranId } });
   if (!order) throw new Error("Order not found");
+
+  if (order.paidStatus) return order; // Already processed
 
   const result = await prisma.order.update({
     where: { tranId },
@@ -125,6 +142,25 @@ const handlePaymentFail = async (tranId: string) => {
   return result;
 };
 
+const handlePaymentCancel = async (tranId: string) => {
+  const result = await prisma.order.update({
+    where: { tranId },
+    data: {
+      status: "CANCELLED",
+    },
+  });
+  return result;
+};
+
+const handleIPN = async (payload: any) => {
+  const { tran_id, status } = payload;
+  if (status === "VALID") {
+    return await handlePaymentSuccess(tran_id);
+  } else {
+    return await handlePaymentFail(tran_id);
+  }
+};
+
 const getOrderByTranId = async (tranId: string) => {
     const result = await prisma.order.findUnique({
         where: { tranId }
@@ -143,6 +179,8 @@ export const OrderServices = {
   createOrder,
   handlePaymentSuccess,
   handlePaymentFail,
+  handlePaymentCancel,
+  handleIPN,
   getOrderByTranId,
   getAllOrders,
 };

@@ -10,5 +10,7 @@ router.get("/:tranId", OrderControllers.getOrder);
 
 router.post("/payment/success/:tranId", OrderControllers.paymentSuccess);
 router.post("/payment/fail/:tranId", OrderControllers.paymentFail);
+router.post("/payment/cancel/:tranId", OrderControllers.paymentCancel);
+router.post("/payment/ipn", OrderControllers.paymentIPN);
 
 export const OrderRoutes = router;
