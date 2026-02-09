@@ -3,11 +3,26 @@ const SSLCommerzPayment = require("sslcommerz-lts");
 import config from "../../../config";
 
 const createOrder = async (data: any) => {
-  const { total_amount, cus_name, cus_email, cus_phone, cus_add1, productName } = data;
+  const { total_amount, cus_name, cus_email, cus_phone, cus_add1, productName, busPostId, eventId, verifyData } = data;
   const tranId = `TRAN-${Date.now()}`;
 
+  // Determine productId
+  let productId = 0;
+  if (busPostId) {
+    if (typeof busPostId === "string" && busPostId.startsWith("virtual-")) {
+      productId = parseInt(busPostId.split("-")[1]);
+    } else {
+      productId = parseInt(busPostId);
+    }
+  } else if (eventId) {
+    productId = parseInt(eventId);
+  }
+
   const orderData = {
+    customerName: cus_name,
     customerEmail: cus_email,
+    productId: productId,
+    productType: verifyData === "bus" ? "BUS" : (verifyData === "event" ? "EVENT" : "BUS"),
     productName: productName || "Ticket",
     totalAmount: parseFloat(total_amount),
     tranId: tranId,
@@ -16,7 +31,7 @@ const createOrder = async (data: any) => {
   };
 
   const result = await prisma.order.create({
-    data: orderData,
+    data: orderData as any,
   });
 
   const paymentData = {
@@ -70,8 +85,7 @@ const handlePaymentSuccess = async (tranId: string) => {
     where: { tranId },
     data: {
       paidStatus: true,
-      paymentTime: new Date().toLocaleString(),
-      status: "completed",
+      status: "SUCCESSED",
     },
   });
 
@@ -105,7 +119,7 @@ const handlePaymentFail = async (tranId: string) => {
   const result = await prisma.order.update({
     where: { tranId },
     data: {
-      status: "failed",
+      status: "FAILED",
     },
   });
   return result;

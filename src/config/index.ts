@@ -73,4 +73,10 @@ export default {
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   },
+  sslcommerz: {
+    store_id: process.env.STORE_ID,
+    store_pass: process.env.STORE_PASS,
+    is_live: process.env.IS_LIVE === "true",
+  },
+  server_url: process.env.SERVER_URL || "http://localhost:5000",
 };
