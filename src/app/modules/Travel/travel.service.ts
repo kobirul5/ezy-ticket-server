@@ -1,3 +1,4 @@
+import { OrderStatus, ProductType } from "../../../generated/prisma/enums";
 import { prisma } from "../../../lib/prisma";
 import { IBusTicketFilterRequest, TTravelLocation } from "./travel.interface";
 
@@ -187,13 +188,47 @@ const findOrCreateSchedule = async (busServiceId: number, date: string, time: st
 };
 
 const getScheduleById = async (id: number) => {
-  const result = await prisma.busSchedule.findUnique({
+  const schedule = await prisma.busSchedule.findUnique({
     where: { id },
     include: {
       busService: true,
     },
   });
-  return result;
+
+  if (!schedule) return null;
+
+  // Fetch all successful and pending orders for this schedule to block those seats
+  const orders = await prisma.order.findMany({
+    where: {
+      productId: id,
+      productType: ProductType.BUS,
+      status: {
+        in: [OrderStatus.PENDING, OrderStatus.SUCCESSED]
+      }
+    }
+  });
+
+  // Aggregate selectedSeats from each order's orderData JSON field
+  const orderBookedSeats = orders.flatMap(order => {
+    const data = order.orderData as any;
+    if (!data) return [];
+    
+    // Check for both direct and nested selectedSeats as seen in some logs
+    const seats = data.selectedSeats || data.orderData?.selectedSeats;
+    return Array.isArray(seats) ? seats : [];
+  });
+
+  // Combine with seats already marked in the schedule (if any)
+  const combinedBookedSeats = Array.from(new Set([
+    ...schedule.bookedSeats,
+    ...orderBookedSeats
+  ]));
+
+  return {
+    ...schedule,
+    bookedSeats: combinedBookedSeats,
+    bookedSeatsCount: combinedBookedSeats.length
+  };
 };
 
 const getBusStands = async () => {

@@ -1,6 +1,7 @@
 import { prisma } from "../../../lib/prisma";
 const SSLCommerzPayment = require("sslcommerz-lts");
 import config from "../../../config";
+import httpStatus from "http-status";
 
 const createOrder = async (data: any) => {
   const { total_amount, cus_name, cus_email, cus_phone, cus_add1, productName, busPostId, eventId, verifyData } = data;
@@ -18,11 +19,11 @@ const createOrder = async (data: any) => {
     productId = parseInt(eventId);
   }
 
-  const orderData = {
+ const orderData = {
     customerName: cus_name,
     customerEmail: cus_email,
     productId: productId,
-    productType: verifyData === "bus" ? "BUS" : (verifyData === "event" ? "EVENT" : "BUS"),
+    productType: verifyData === "bus" ? ProductType.BUS : (verifyData === "event" ? ProductType.EVENT : ProductType.BUS),
     totalAmount: parseFloat(total_amount),
     tranId: tranId,
     paymentMethod: "SSLCOMMERZ",
@@ -32,6 +33,13 @@ const createOrder = async (data: any) => {
   const result = await prisma.order.create({
     data: orderData as any,
   });
+
+  console.log(result, "----------------");
+
+  if(!result){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Order not created")
+  }
+
 
   const paymentData = {
     total_amount: total_amount,
@@ -80,6 +88,8 @@ const createOrder = async (data: any) => {
 };
 
 import { TravelServices } from "../Travel/travel.service";
+import ApiError from "../../../errors/ApiErrors";
+import { ProductType } from "../../../generated/prisma/enums";
 
 const handlePaymentSuccess = async (tranId: string) => {
   const order = await prisma.order.findUnique({ where: { tranId } });
