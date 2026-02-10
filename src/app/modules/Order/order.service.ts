@@ -7,13 +7,21 @@ import { ProductType } from "../../../generated/prisma/enums";
 import { TravelServices } from "../Travel/travel.service";
 
 const createOrder = async (data: any) => {
-  const { total_amount, cus_name, cus_email, cus_phone, cus_add1, productName, busPostId, eventId, verifyData, routeAndDateAndTime } = data;
+  const { total_amount, cus_name, cus_email, cus_phone, cus_add1, productName, busPostId, eventId, verifyData, userId, routeAndDateAndTime } = data;
   const tranId = `TRAN-${Date.now()}`;
 
   if(!routeAndDateAndTime.date){
     throw new ApiError(httpStatus.BAD_REQUEST, "Date is required")
   }
 
+  const user = await prisma.user.findFirst({
+    where: { id: userId }
+  })
+
+  console.log(user)
+  if(!user){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Ticket booking is only for registered users")
+  }
 
   // Determine productId
   let productId = 0;
@@ -29,6 +37,7 @@ const createOrder = async (data: any) => {
 
  const orderData = {
     customerName: cus_name,
+    userId: user.id,
     customerEmail: cus_email,
     productId: productId,
     productType: verifyData === "bus" ? ProductType.BUS : (verifyData === "event" ? ProductType.EVENT : ProductType.BUS),

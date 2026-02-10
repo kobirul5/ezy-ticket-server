@@ -150,6 +150,7 @@ const getAllBusTickets = async (filters: IBusTicketFilterRequest) => {
       bookedSeats: schedule.bookedSeats,
       date: date || "",
       busServiceId: schedule.busServiceId,
+      contact: schedule.busService.contact,
       image: schedule.busService.image,
     }));
 };
@@ -187,9 +188,63 @@ const findOrCreateSchedule = async (busServiceId: number, date: string, time: st
   return schedule;
 };
 
-const getScheduleById = async (id: number, date: string) => {
+// const getScheduleById = async (id: number, date: string) => {
+//   console.log(date)
+//   const schedule = await prisma.busSchedule.findUnique({
+//     where: { id },
+//     include: {
+//       busService: true,
+//     },
+//   });
+
+//   if (!schedule) return null;
+
+//   // Fetch all potentially relevant orders for this schedule
+//   const orders = await prisma.order.findMany({
+//     where: {
+//       productId: id,
+//       productType: ProductType.BUS,
+//       status: {
+//         in: [OrderStatus.PENDING, OrderStatus.SUCCESSED]
+//       }
+//     }
+//   });
+
+//   // Filter by date in JS to handle potential nesting inconsistencies in orderData
+//   const dateSpecificOrders = orders.filter(order => {
+//     const data = order.orderData as any;
+//     if (!data) return false;
+    
+//     // Check both direct and nested routeAndDateAndTime as seen in user logs
+//     const orderDate = data.routeAndDateAndTime?.date || data.orderData?.routeAndDateAndTime?.date;
+//     return orderDate === date;
+//   });
+
+//   // Aggregate selectedSeats from the filtered orders
+//   const orderBookedSeats = dateSpecificOrders.flatMap(order => {
+//     const data = order.orderData as any;
+//     const seats = data.selectedSeats || data.orderData?.selectedSeats;
+//     return Array.isArray(seats) ? seats : [];
+//   });
+
+//   // Combine with seats already marked in the schedule model (if any)
+//   const combinedBookedSeats = Array.from(new Set([
+//     ...schedule.bookedSeats,
+//     ...orderBookedSeats
+//   ]));
+
+//   return {
+//     ...schedule,
+//     bookedSeats: combinedBookedSeats,
+//     bookedSeatsCount: combinedBookedSeats.length
+//   };
+// };
+
+
+const getScheduleById = async (scheduleId: number, date: string) => {
+  // 1️⃣ Get schedule info
   const schedule = await prisma.busSchedule.findUnique({
-    where: { id },
+    where: { id: scheduleId },
     include: {
       busService: true,
     },
@@ -197,46 +252,42 @@ const getScheduleById = async (id: number, date: string) => {
 
   if (!schedule) return null;
 
-  // Fetch all potentially relevant orders for this schedule
+  // 2️⃣ Get all orders for this schedule (bus)
   const orders = await prisma.order.findMany({
     where: {
-      productId: id,
-      productType: ProductType.BUS,
-      status: {
-        in: [OrderStatus.PENDING, OrderStatus.SUCCESSED]
-      }
-    }
+      productId: scheduleId,
+      productType: ProductType.BUS
+    },
   });
 
-  // Filter by date in JS to handle potential nesting inconsistencies in orderData
-  const dateSpecificOrders = orders.filter(order => {
-    const data = order.orderData as any;
-    if (!data) return false;
-    
-    // Check both direct and nested routeAndDateAndTime as seen in user logs
-    const orderDate = data.routeAndDateAndTime?.date || data.orderData?.routeAndDateAndTime?.date;
-    return orderDate === date;
+  // 3️⃣ Filter orders by date inside orderData
+  const dateWiseOrders = orders.filter(order => {
+    const orderData = order.orderData as any;
+    return orderData?.routeAndDateAndTime?.date === date;
   });
 
-  // Aggregate selectedSeats from the filtered orders
-  const orderBookedSeats = dateSpecificOrders.flatMap(order => {
-    const data = order.orderData as any;
-    const seats = data.selectedSeats || data.orderData?.selectedSeats;
-    return Array.isArray(seats) ? seats : [];
-  });
+  // 4️⃣ Extract booked seats from matched orders
+  const bookedSeats = Array.from(
+    new Set(
+      dateWiseOrders.flatMap(order => {
+        const orderData = order.orderData as any;
+        return Array.isArray(orderData?.selectedSeats)
+          ? orderData.selectedSeats
+          : [];
+      })
+    )
+  );
 
-  // Combine with seats already marked in the schedule model (if any)
-  const combinedBookedSeats = Array.from(new Set([
-    ...schedule.bookedSeats,
-    ...orderBookedSeats
-  ]));
 
+  // 5️⃣ Return schedule + booking info
   return {
     ...schedule,
-    bookedSeats: combinedBookedSeats,
-    bookedSeatsCount: combinedBookedSeats.length
+    bookedSeats,
+    bookedSeatsCount: bookedSeats.length,
+    date,
   };
 };
+
 
 const getBusStands = async () => {
   const services = await prisma.busService.findMany({
