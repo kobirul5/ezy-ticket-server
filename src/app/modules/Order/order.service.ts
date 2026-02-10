@@ -2,10 +2,18 @@ import { prisma } from "../../../lib/prisma";
 const SSLCommerzPayment = require("sslcommerz-lts");
 import config from "../../../config";
 import httpStatus from "http-status";
+import ApiError from "../../../errors/ApiErrors";
+import { ProductType } from "../../../generated/prisma/enums";
+import { TravelServices } from "../Travel/travel.service";
 
 const createOrder = async (data: any) => {
-  const { total_amount, cus_name, cus_email, cus_phone, cus_add1, productName, busPostId, eventId, verifyData } = data;
+  const { total_amount, cus_name, cus_email, cus_phone, cus_add1, productName, busPostId, eventId, verifyData, routeAndDateAndTime } = data;
   const tranId = `TRAN-${Date.now()}`;
+
+  if(!routeAndDateAndTime.date){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Date is required")
+  }
+
 
   // Determine productId
   let productId = 0;
@@ -34,7 +42,6 @@ const createOrder = async (data: any) => {
     data: orderData as any,
   });
 
-  console.log(result, "----------------");
 
   if(!result){
     throw new ApiError(httpStatus.BAD_REQUEST, "Order not created")
@@ -86,10 +93,6 @@ const createOrder = async (data: any) => {
     throw new Error(apiResponse?.failedreason || "SSLCommerz initialization failed");
   }
 };
-
-import { TravelServices } from "../Travel/travel.service";
-import ApiError from "../../../errors/ApiErrors";
-import { ProductType } from "../../../generated/prisma/enums";
 
 const handlePaymentSuccess = async (tranId: string) => {
   const order = await prisma.order.findUnique({ where: { tranId } });

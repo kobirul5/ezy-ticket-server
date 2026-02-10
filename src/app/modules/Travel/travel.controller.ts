@@ -134,7 +134,8 @@ const getBusStands = catchAsync(async (req: Request, res: Response) => {
 
 const getScheduleById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = await TravelServices.getScheduleById(Number(id));
+  const { date } = req.query;
+  const result = await TravelServices.getScheduleById(Number(id), date as string);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
