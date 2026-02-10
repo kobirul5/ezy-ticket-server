@@ -55,6 +55,17 @@ const getOrder = catchAsync(async (req: Request, res: Response) => {
     });
 })
 
+const getMyBusOrders = catchAsync(async (req: Request, res: Response) => {
+  const userId = (req as any).user.id;
+  const result = await OrderServices.getMyBusOrders(Number(userId));
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "My bus orders fetched successfully",
+    data: result,
+  });
+});
+
 const getAllOrders = catchAsync(async (req: Request, res: Response) => {
   const result = await OrderServices.getAllOrders();
   sendResponse(res, {
@@ -73,4 +84,5 @@ export const OrderControllers = {
   paymentIPN,
   getOrder,
   getAllOrders,
+  getMyBusOrders,
 };

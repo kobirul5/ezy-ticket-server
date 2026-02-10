@@ -3,7 +3,7 @@ const SSLCommerzPayment = require("sslcommerz-lts");
 import config from "../../../config";
 import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiErrors";
-import { ProductType } from "../../../generated/prisma/enums";
+import { ProductType, OrderStatus } from "../../../generated/prisma/enums";
 import { TravelServices } from "../Travel/travel.service";
 
 const createOrder = async (data: any) => {
@@ -186,6 +186,42 @@ const getAllOrders = async () => {
   });
 };
 
+const getMyBusOrders = async (userId: number) => {
+  // 1. Get all bus services owned by this manager
+  const myBusServices = await prisma.busService.findMany({
+    where: { userId },
+    select: { id: true }
+  });
+
+  const busServiceIds = myBusServices.map(service => service.id);
+
+  if (busServiceIds.length === 0) return [];
+
+  // 2. Get all schedules for these bus services
+  const mySchedules = await prisma.busSchedule.findMany({
+    where: {
+      busServiceId: { in: busServiceIds }
+    },
+    select: { id: true }
+  });
+
+  const scheduleIds = mySchedules.map(schedule => schedule.id);
+
+  if (scheduleIds.length === 0) return [];
+
+  // 3. Get all successful orders for these schedules
+  const orders = await prisma.order.findMany({
+    where: {
+      productId: { in: scheduleIds },
+      productType: ProductType.BUS,
+      status: OrderStatus.SUCCESSED,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return orders;
+};
+
 export const OrderServices = {
   createOrder,
   handlePaymentSuccess,
@@ -194,4 +230,5 @@ export const OrderServices = {
   handleIPN,
   getOrderByTranId,
   getAllOrders,
+  getMyBusOrders,
 };

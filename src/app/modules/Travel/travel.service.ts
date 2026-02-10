@@ -248,6 +248,7 @@ const getScheduleById = async (scheduleId: number, date: string) => {
     include: {
       busService: true,
     },
+    
   });
 
   if (!schedule) return null;
@@ -256,7 +257,8 @@ const getScheduleById = async (scheduleId: number, date: string) => {
   const orders = await prisma.order.findMany({
     where: {
       productId: scheduleId,
-      productType: ProductType.BUS
+      productType: ProductType.BUS,
+      status: {in: [OrderStatus.PENDING, OrderStatus.SUCCESSED]}
     },
   });
 

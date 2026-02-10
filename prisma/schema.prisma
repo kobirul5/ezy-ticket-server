@@ -127,7 +127,7 @@ model BusSchedule {
   bookedSeats  String[]
   time         String
   busServiceId Int
-  busService   BusService @relation(fields: [busServiceId], references: [id])
+  busService   BusService @relation(fields: [busServiceId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
