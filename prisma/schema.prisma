@@ -29,21 +29,29 @@ model User {
 }
 
 model Event {
-  id           Int      @id @default(autoincrement())
-  title        String
-  eventType    String
-  eventDate    String
-  eventTime    String
-  duration     String
-  price        Float
-  totalTickets Int
-  location     String
-  details      String
-  managerEmail String
-  status       String   @default("pending") // pending, verified, rejected
-  advertise    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  title         String
+  eventType     String
+  eventCategory String?
+  eventDate     String
+  eventTime     String
+  duration      String
+  price         Float
+  totalTickets  Int
+  soldTickets   Int      @default(0)
+  maxTickets    Int?
+  location      String
+  details       String
+  organizer     String?
+  image         String?
+  category      String   @default("event")
+  managerName   String?
+  managerImage  String?
+  managerEmail  String
+  status        String   @default("pending") // pending, verified, rejected
+  advertise     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   manager User @relation(fields: [managerEmail], references: [email])
 

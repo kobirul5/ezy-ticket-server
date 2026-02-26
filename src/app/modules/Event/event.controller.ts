@@ -28,7 +28,16 @@ const getAllEvents = catchAsync(async (req: Request, res: Response) => {
 
 const getSingleEvent = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = await EventServices.getSingleEvent(Number(id));
+  const numericId = Number(id);
+  if (isNaN(numericId)) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "Invalid event ID format",
+      data: null,
+    });
+  }
+  const result = await EventServices.getSingleEvent(numericId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -39,7 +48,16 @@ const getSingleEvent = catchAsync(async (req: Request, res: Response) => {
 
 const updateEvent = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = await EventServices.updateEvent(Number(id), req.body);
+  const numericId = Number(id);
+  if (isNaN(numericId)) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "Invalid event ID format",
+      data: null,
+    });
+  }
+  const result = await EventServices.updateEvent(numericId, req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -50,7 +68,16 @@ const updateEvent = catchAsync(async (req: Request, res: Response) => {
 
 const deleteEvent = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = await EventServices.deleteEvent(Number(id));
+  const numericId = Number(id);
+  if (isNaN(numericId)) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "Invalid event ID format",
+      data: null,
+    });
+  }
+  const result = await EventServices.deleteEvent(numericId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
