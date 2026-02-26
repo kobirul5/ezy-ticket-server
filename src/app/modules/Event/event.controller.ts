@@ -4,8 +4,17 @@ import sendResponse from "../../../shared/sendResponse";
 import httpStatus from "http-status";
 import { EventServices } from "./event.service";
 import pick from "../../../shared/pick";
+import { fileUploader } from "../../../helpars/fileUploader";
 
 const createEvent = catchAsync(async (req: Request, res: Response) => {
+  const file = req.file;
+  if (file) {
+    const uploadResult = await fileUploader.uploadToCloudinary(file);
+    req.body.image = uploadResult.Location;
+  }
+
+  // Parse numeric fields from Multer string body if necessary
+  // Note: JSON.parse was already done in the route middleware for req.body
   const result = await EventServices.createEvent(req.body);
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
@@ -57,6 +66,13 @@ const updateEvent = catchAsync(async (req: Request, res: Response) => {
       data: null,
     });
   }
+
+  const file = req.file;
+  if (file) {
+    const uploadResult = await fileUploader.uploadToCloudinary(file);
+    req.body.image = uploadResult.Location;
+  }
+
   const result = await EventServices.updateEvent(numericId, req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
