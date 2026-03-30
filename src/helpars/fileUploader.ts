@@ -68,7 +68,7 @@ const uploadToCloudinary = async (
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
-        folder: "uploads",
+        folder: "EzyTicket",
         resource_type: "auto", // Supports images, videos, etc.
         use_filename: true,
         unique_filename: false,
