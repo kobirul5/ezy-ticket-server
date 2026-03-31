@@ -7,6 +7,7 @@ const router = express.Router();
 router.get("/", auth("ADMIN"), OrderControllers.getAllOrders);
 router.get("/my-orders", auth("TRAVEL_MANAGER"), OrderControllers.getMyBusOrders);
 router.post("/create-payment", auth(), OrderControllers.createOrder);
+router.post("/event-payment", auth(), OrderControllers.createEventOrder);
 router.get("/:tranId", OrderControllers.getOrder);
 
 router.post("/payment/success/:tranId", OrderControllers.paymentSuccess);

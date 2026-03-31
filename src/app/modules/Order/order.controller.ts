@@ -6,8 +6,18 @@ import { OrderServices } from "./order.service";
 import config from "../../../config";
 
 const createOrder = catchAsync(async (req: Request, res: Response) => {
-  console.log(req.body, "----------------");
+
   const result = await OrderServices.createOrder(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Payment link generated",
+    data: result,
+  });
+});
+
+const createEventOrder = catchAsync(async (req: Request, res: Response) => {
+  const result = await OrderServices.createEventOrder(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -78,6 +88,7 @@ const getAllOrders = catchAsync(async (req: Request, res: Response) => {
 
 export const OrderControllers = {
   createOrder,
+  createEventOrder,
   paymentSuccess,
   paymentFail,
   paymentCancel,

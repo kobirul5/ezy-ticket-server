@@ -103,6 +103,90 @@ const createOrder = async (data: any) => {
   }
 };
 
+const createEventOrder = async (data: any) => {
+  const { total_amount, cus_name, cus_email, cus_phone, cus_add1, productName, eventId, userId, quantity } = data;
+  const tranId = `TRAN-${Date.now()}`;
+
+  const user = await prisma.user.findFirst({
+    where: userId ? { id: parseInt(userId) } : { email: cus_email || data.email }
+  });
+
+  if (!user && !data.email) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Ticket booking requires user details");
+  }
+
+  const productIdValue = parseInt(eventId || data.eventId || (typeof data.orderData === "object" ? data.orderData.eventId : undefined));
+  
+  if (isNaN(productIdValue)) {
+     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Event ID");
+  }
+
+  const orderDataPayload: any = {
+    customerName: cus_name || data.name,
+    userId: user?.id,
+    customerEmail: cus_email || data.email,
+    productId: productIdValue,
+    productType: ProductType.EVENT,
+    totalAmount: parseFloat(total_amount || data.price),
+    tranId: tranId,
+    paymentMethod: "SSLCOMMERZ",
+    orderData: data,
+  };
+
+  const result = await prisma.order.create({
+    data: orderDataPayload,
+  });
+
+  if (!result) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Event order not created");
+  }
+
+  const paymentData = {
+    total_amount: orderDataPayload.totalAmount,
+    currency: "BDT",
+    tran_id: tranId,
+    success_url: `${config.server_url}/api/v1/orders/payment/success/${tranId}`,
+    fail_url: `${config.server_url}/api/v1/orders/payment/fail/${tranId}`,
+    cancel_url: `${config.server_url}/api/v1/orders/payment/cancel/${tranId}`,
+    ipn_url: `${config.server_url}/api/v1/orders/payment/ipn`,
+    shipping_method: "Courier",
+    product_name: productName || data.product || "Event Ticket",
+    product_category: "Ticketing",
+    product_profile: "general",
+    cus_name: orderDataPayload.customerName,
+    cus_email: orderDataPayload.customerEmail,
+    cus_add1: cus_add1 || data.address || "Dhaka",
+    cus_add2: "Dhaka",
+    cus_city: "Dhaka",
+    cus_state: "Dhaka",
+    cus_postcode: "1000",
+    cus_country: "Bangladesh",
+    cus_phone: cus_phone || data.phone || "01711111111",
+    cus_fax: "01711111111",
+    ship_name: orderDataPayload.customerName,
+    ship_add1: "Dhaka",
+    ship_add2: "Dhaka",
+    ship_city: "Dhaka",
+    ship_state: "Dhaka",
+    ship_postcode: 1000,
+    ship_country: "Bangladesh",
+  };
+
+  const sslcz = new SSLCommerzPayment(
+    config.sslcommerz.store_id,
+    config.sslcommerz.store_pass,
+    config.sslcommerz.is_live
+  );
+
+  const apiResponse = await sslcz.init(paymentData);
+  
+  if (apiResponse?.status === "SUCCESS") {
+    return { url: apiResponse.GatewayPageURL, tranId };
+  } else {
+    throw new Error(apiResponse?.failedreason || "SSLCommerz initialization failed");
+  }
+};
+
 const handlePaymentSuccess = async (tranId: string) => {
   const order = await prisma.order.findUnique({ where: { tranId } });
   if (!order) throw new Error("Order not found");
@@ -137,6 +221,19 @@ const handlePaymentSuccess = async (tranId: string) => {
 
     if (scheduleId) {
       await TravelServices.updateBookedSeats(scheduleId, selectedSeats);
+    }
+  } else if (order.productType === ProductType.EVENT || orderData?.verifyData === "event") {
+    const eventId = orderData.eventId || order.productId;
+    const quantity = parseInt(orderData.quantity) || 1;
+    if (eventId) {
+      await prisma.event.update({
+        where: { id: parseInt(eventId) },
+        data: {
+          soldTickets: {
+            increment: quantity
+          }
+        }
+      });
     }
   }
 
@@ -224,6 +321,7 @@ const getMyBusOrders = async (userId: number) => {
 
 export const OrderServices = {
   createOrder,
+  createEventOrder,
   handlePaymentSuccess,
   handlePaymentFail,
   handlePaymentCancel,
