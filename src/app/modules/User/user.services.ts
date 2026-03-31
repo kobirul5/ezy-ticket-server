@@ -135,6 +135,18 @@ const getUserByEmail = async (email: string) => {
   return result;
 }
 
+const adminChangeUserRole = async (userId: number, role: any) => {
+  const result = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      role,
+    },
+  });
+  return result;
+};
+
 export const UserService = {
   getMyProfile,
   updateUser,
@@ -143,5 +155,6 @@ export const UserService = {
   suspendUser,
   removeUserByAdmin,
   changeUserRole,
-  getUserByEmail
+  getUserByEmail,
+  adminChangeUserRole
 };

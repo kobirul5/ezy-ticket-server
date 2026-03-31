@@ -141,6 +141,19 @@ const getUserByEmail = catchAsync(async (req: Request, res: Response) => {
   });
 })
 
+const adminChangeUserRole = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  const result = await UserService.adminChangeUserRole(Number(id), role);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User role changed successfully",
+    data: result,
+  });
+});
+
 export const UserController = {
   getMyProfile,
   updateUser,
@@ -149,5 +162,6 @@ export const UserController = {
   changeUserRole,
   getAllUsers,
   suspendUser,
-  getUserByEmail
+  getUserByEmail,
+  adminChangeUserRole
 };

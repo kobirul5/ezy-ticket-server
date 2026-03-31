@@ -27,6 +27,7 @@ router.put("/role-change", auth(), UserController.changeUserRole);
 router.get("/admin/users", auth(UserRole.ADMIN), UserController.getAllUsers);
 router.get("/admin/user/:id", auth(UserRole.ADMIN), UserController.getSingleUserById);
 router.patch("/admin/user/suspend/:id", auth(UserRole.ADMIN), UserController.suspendUser);
+router.patch("/admin/change-role/:id", auth(UserRole.ADMIN), UserController.adminChangeUserRole);
 router.delete("/admin/user/:id", auth(UserRole.ADMIN), UserController.removeUserByAdmin);
 router.get("/:email", auth(), UserController.getUserByEmail);
 
