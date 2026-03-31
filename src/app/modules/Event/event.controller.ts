@@ -113,6 +113,27 @@ const getMyAddedEvents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const verifyEvent = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const numericId = Number(id);
+  if (isNaN(numericId)) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "Invalid event ID format",
+      data: null,
+    });
+  }
+
+  const result = await EventServices.updateEvent(numericId, req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Event status updated successfully",
+    data: result,
+  });
+});
+
 export const EventControllers = {
   createEvent,
   getAllEvents,
@@ -120,4 +141,5 @@ export const EventControllers = {
   updateEvent,
   deleteEvent,
   getMyAddedEvents,
+  verifyEvent,
 };

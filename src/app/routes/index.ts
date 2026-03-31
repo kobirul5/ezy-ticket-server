@@ -6,6 +6,9 @@ import { EntertainmentRoutes } from "../modules/Entertainment/entertainment.rout
 import { TravelRoutes } from "../modules/Travel/travel.routes";
 import { OrderRoutes } from "../modules/Order/order.routes";
 
+import { EventControllers } from "../modules/Event/event.controller";
+import auth from "../middlewares/auth";
+
 const router = express.Router();
 
 const moduleRoutes = [
@@ -36,4 +39,7 @@ const moduleRoutes = [
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));
+
+router.patch("/verifyEvent/:id", auth("ADMIN"), EventControllers.verifyEvent);
+
 export default router;
