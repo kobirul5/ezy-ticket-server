@@ -58,8 +58,8 @@ const loginUser = async (data: any) => {
 
   const token = jwtHelpers.generateToken(
     { id: user.id, role: user.role },
-    config.jwt.jwt_secret as Secret,
-    config.jwt.expires_in as string
+    (config.jwt?.jwt_secret || process.env.JWT_SECRET || "ezy_ticket_super_secret_jwt_key_2026") as Secret,
+    (config.jwt?.expires_in || process.env.EXPIRES_IN || "7d") as string
   );
 
   return {

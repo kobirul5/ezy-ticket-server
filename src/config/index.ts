@@ -4,20 +4,20 @@ import path from "path";
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 export default {
-  env: process.env.NODE_ENV,
-  port: process.env.PORT,
+  env: process.env.NODE_ENV || "development",
+  port: process.env.PORT || "5000",
   bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS || "12",
-  frontend_url: process.env.FRONTEND_BASE_URL,
-   APP_DASHBOARD_URL: process.env.APP_DASHBOARD_URL,
+  frontend_url: process.env.FRONTEND_BASE_URL || "http://localhost:3000",
+   APP_DASHBOARD_URL: process.env.APP_DASHBOARD_URL || "http://localhost:3000/dashboard",
   jwt: {
-    jwt_secret: process.env.JWT_SECRET,
-    expires_in: process.env.EXPIRES_IN,
-    refresh_token_secret: process.env.REFRESH_TOKEN_SECRET,
-    refresh_token_expires_in: process.env.REFRESH_TOKEN_EXPIRES_IN,
-    reset_pass_secret: process.env.RESET_PASS_TOKEN,
-    reset_pass_token_expires_in: process.env.RESET_PASS_TOKEN_EXPIRES_IN,
+    jwt_secret: process.env.JWT_SECRET || "ezy_ticket_super_secret_jwt_key_2026",
+    expires_in: process.env.EXPIRES_IN || "7d",
+    refresh_token_secret: process.env.REFRESH_TOKEN_SECRET || "ezy_ticket_super_secret_refresh_token_key_2026",
+    refresh_token_expires_in: process.env.REFRESH_TOKEN_EXPIRES_IN || "30d",
+    reset_pass_secret: process.env.RESET_PASS_TOKEN || "ezy_ticket_reset_pass_secret_key_2026",
+    reset_pass_token_expires_in: process.env.RESET_PASS_TOKEN_EXPIRES_IN || "15m",
   },
-  reset_pass_link: process.env.RESET_PASS_LINK,
+  reset_pass_link: process.env.RESET_PASS_LINK || "http://localhost:3000/reset-password",
   emailSender: {
     email: process.env.EMAIL,
     app_pass: process.env.APP_PASS,
