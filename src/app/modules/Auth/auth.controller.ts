@@ -21,7 +21,7 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: config.env === "production",
-      sameSite: "lax",
+      sameSite: config.env === "production" ? "none" : "lax",
     });
   }
 
@@ -42,7 +42,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: config.env === "production",
-    sameSite: "lax",
+    sameSite: config.env === "production" ? "none" : "lax",
   });
 
   sendResponse(res, {
@@ -59,7 +59,7 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: config.env === "production",
-    sameSite: "lax",
+    sameSite: config.env === "production" ? "none" : "lax",
   });
 
   sendResponse(res, {
@@ -121,7 +121,7 @@ const verifyForgotPasswordOtp = catchAsync(
     res.cookie("token", token, {
       httpOnly: true,
       secure: config.env === "production",
-      sameSite: "lax",
+      sameSite: config.env === "production" ? "none" : "lax",
     });
 
     sendResponse(res, {
@@ -153,7 +153,7 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: config.env === "production",
-    sameSite: "lax",
+    sameSite: config.env === "production" ? "none" : "lax",
   });
 
   sendResponse(res, {
