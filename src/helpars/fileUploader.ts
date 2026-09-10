@@ -38,7 +38,7 @@ const cloudinaryStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     public_id: (req, file) =>
-      `elitesoccerevent/${Date.now()}_${uuidv4()}_${file.originalname}`, // Use a unique name for each file
+      `EzyTicket/${Date.now()}_${uuidv4()}_${file.originalname}`, // Use a unique name for each file
   },
 });
 
@@ -105,7 +105,7 @@ const uploadToDigitalOcean = async (
     // Replace spaces with underscores in the original file name
     const sanitizedFileName = file.originalname.replace(/\s+/g, "_");
 
-    const Key = `elitesoccerevent/${Date.now()}_${uuidv4()}_${sanitizedFileName}`;
+    const Key = `EzyTicket/${Date.now()}_${uuidv4()}_${sanitizedFileName}`;
     const uploadParams = {
       Bucket: process.env.DO_SPACE_BUCKET || "",
       Key,

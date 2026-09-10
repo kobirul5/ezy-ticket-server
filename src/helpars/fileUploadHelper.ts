@@ -27,8 +27,10 @@ const upload = multer({ storage: uploadData });
 
 const uploadToCloudinary = async (file: IUploadFile): Promise<ICloudinaryResponse | undefined> => {
     return new Promise((resolve, reject) => {
-        cloudinary.uploader.upload(file.path,
-            (error: Error, result: ICloudinaryResponse) => {
+        cloudinary.uploader.upload(
+            file.path,
+            { folder: 'EzyTicket' },
+            (error: any, result: any) => {
                 fs.unlinkSync(file.path);
                 if (error) {
                     reject(error)
@@ -36,7 +38,8 @@ const uploadToCloudinary = async (file: IUploadFile): Promise<ICloudinaryRespons
                 else {
                     resolve(result)
                 }
-            })
+            }
+        )
     })
 };
 
